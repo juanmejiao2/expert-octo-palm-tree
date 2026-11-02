@@ -12,7 +12,7 @@ public:
     virtual ~entidad();
     virtual void mover(float dt);
     void recibirDanio(short cant);
-
+    void setX(float nuevaX) { x = nuevaX; }
 float GETX() const{
     return x;
     }

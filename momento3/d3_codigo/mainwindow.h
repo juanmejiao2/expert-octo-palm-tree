@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include "jugador.h"
-
+#include "enemigos.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -35,6 +35,7 @@ private:
     bool moviendoIzquierda;
     float camaraX;
     QPixmap spriteSheetPunisher;
+    QList<enemigo*> enemigos;
 
 };
 #endif // MAINWINDOW_H
