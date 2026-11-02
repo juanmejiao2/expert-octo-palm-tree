@@ -9,6 +9,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    moviendoDerecha = false;
+    moviendoIzquierda = false;
+    camaraX = 0.0f;
+
     this->setFixedSize(1280,720);
 
     spriteSheetPunisher.load("Punisher_sprites.png");
@@ -23,9 +27,10 @@ MainWindow::MainWindow(QWidget *parent)
     enemigos.append(new enemigo(1600.0f, 350.0f, true));
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete jugador;
+    qDeleteAll(proyectiles);
+    proyectiles.clear();
     delete ui;
 }
 
@@ -64,6 +69,31 @@ void MainWindow::actualizarJuego(){
     for (enemigo* enemigo : enemigos) {
         enemigo->actualizar(jugador->GETX(), jugador->GETY());
     }
+
+    for (int i = proyectiles.size() - 1; i >= 0; --i) {
+        proyectiles[i]->mover(0.016f);
+        if (proyectiles[i]->GETX() < camaraX - 200 || proyectiles[i]->GETX() > camaraX + width() + 200) {
+            delete proyectiles[i];
+            proyectiles.removeAt(i);
+        }
+    }
+
+    for (enemigo* enemigo : enemigos) {
+        enemigo->actualizar(jugador->GETX(), jugador->GETY());
+
+        if (enemigo->puededisparar()) {
+            float velocidadBalaX = (jugador->GETX() < enemigo->GETX()) ? -600.0f : 600.0f;
+
+            proyectiles.append(new Proyectil(
+            enemigo->GETX(),
+            enemigo->GETY() + 20,
+            velocidadBalaX,
+            0.0f,
+            false,
+            TipoMovimientoProyectil::Rectilineo));
+
+        }
+    }
     update();
 }
 
@@ -80,6 +110,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     else if (event->key() == Qt::Key_A || event->key() == Qt::Key_Left) {
         moviendoIzquierda=true;
         jugador->setVelocidadX(-300.0f);
+    }
+    else if (event->key() == Qt::Key_J || event->key()==Qt::Key_Z) {
+        Proyectil* nuevoProyectil = jugador->disparar();
+        if (nuevoProyectil != nullptr) {
+            proyectiles.append(nuevoProyectil);
+        }
     }
 }
 
@@ -132,33 +168,52 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         painter.drawPixmap(xPos, 0, fondoEscalado);
     }
 
-    int indiceFrame = 0;
-    int spriteY = 1669;
-    int totalFramesFila = 12;
-    float anchoTiraFila = 932.0f;
-    int offsetXInicial = 4;
-    int offsetPiesY = 0;
+    int indiceFrame= 0;
+    int spriteY= 1669;
+    int totalFramesFila= 12;
+    float anchoTiraFila= 932.0f;
+    int offsetXInicial= 4;
+    int offsetPiesY= 0;
 
     if (jugador->GETEnElAire()) {
-        spriteY = 1438;
-        totalFramesFila = 3;
-        anchoTiraFila = 185.0f;
-        offsetXInicial = 362;
+        if (jugador->GETDisparandoAnim()) {
+            // --- DISPARO EN EL AIRE (Frame fijo de la balacera) ---
+            spriteY = 1779;          // Fila del disparo
+            totalFramesFila = 6;
+            anchoTiraFila = 780.0f;
+            offsetXInicial = -4;
+            indiceFrame = 1;         // Frame 1 fijo para que muestre el fogonazo en el aire
+        } else {
+            // --- SALTO NORMAL ---
+            spriteY = 1438;
+            totalFramesFila = 3;
+            anchoTiraFila = 185.0f;
+            offsetXInicial = 362;
 
-        static int frameSaltoActual = 0;
-        static int temporizadorSalto = 0;
+            static int frameSaltoActual = 0;
+            static int temporizadorSalto = 0;
 
-        temporizadorSalto++;
-        if (temporizadorSalto >= 16) {
-            frameSaltoActual = (frameSaltoActual + 1) % 3;
-            temporizadorSalto = 0;
+            temporizadorSalto++;
+            if (temporizadorSalto >= 16) {
+                frameSaltoActual = (frameSaltoActual + 1) % 3;
+                temporizadorSalto = 0;
+            }
+            indiceFrame = frameSaltoActual;
         }
-        indiceFrame = frameSaltoActual;
+    } else if (jugador->GETDisparandoAnim()) {
+        // --- DISPARO EN EL SUELO (Animación completa de 6 frames) ---
+        spriteY = 1779;
+        totalFramesFila = 6;
+        anchoTiraFila = 780.0f;
+        offsetXInicial = -4;
+        indiceFrame = jugador->GETFrameDisparo() % 6;
     } else {
+        // --- SUELO NORMAL (Caminar / Quieto) ---
         indiceFrame = jugador->GETFrameActual() % 12;
         spriteY = 1669;
         totalFramesFila = 12;
         anchoTiraFila = 932.0f;
+        offsetXInicial = 4;
     }
 
     if (camaraX > anchoMaximoNivel - width()) {
@@ -206,14 +261,28 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 60, Qt::blue);
 
             if (enemigo->MostrarLaAlerta()) {
-                QFont fuenteAlerta("Arial", 30, QFont::Bold);
+                QFont fuenteAlerta("Arial", 50, QFont::Bold);
                 painter.setFont(fuenteAlerta);
                 painter.setPen(Qt::red);
                 int anchoRectangulo = 40;
                 int centroEnemigoX = enemigoPantallaX + (anchoRectangulo / 2);
-                int alturaAlertaY = enemigoPantallaY - 50;
-                painter.drawText(centroEnemigoX - 5, alturaAlertaY, "!");
+                int alturaAlertaY = enemigoPantallaY - 30;
+                painter.drawText(centroEnemigoX - 10, alturaAlertaY, "!");
             }
         }
     }
+
+    painter.setPen(Qt::white);
+    QFont fuenteHud("Arial", 16, QFont::Bold);
+    painter.setFont(fuenteHud);
+    painter.drawText(30, 40, "MUNICIÓN: " + QString::number(jugador->GETMunicion()));
+    painter.restore();
+    for (Proyectil* p : proyectiles) {
+        int projPantallaX = static_cast<int>(p->GETX() - camaraX);
+        int projPantallaY = static_cast<int>(p->GETY());
+
+        painter.setBrush(Qt::yellow);
+        painter.drawEllipse(projPantallaX, projPantallaY, 8, 4);
+    }
+
 }

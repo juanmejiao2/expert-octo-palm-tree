@@ -1,4 +1,5 @@
 #include "jugador.h"
+#include "proyectil.h"
 
 static float direccionDeseada = 0.0f;
 
@@ -6,6 +7,11 @@ jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicion
     municion = 30;
     pesoBase = 5.0f;
     enAire = false;
+    armaJugador = new arma(1, 25, 800.0f, 10);
+}
+
+jugador::~jugador() {
+    delete armaJugador;
 }
 
 void jugador::saltar() {
@@ -15,10 +21,18 @@ void jugador::saltar() {
     }
 }
 
-void jugador::disparar() {
+Proyectil* jugador::disparar() {
     if (municion > 0) {
         municion--;
+        disparandoAnimacion = true;
+        contadorAnimacionDisparo = 10;
+
+        float velocidadBalaX = mirandoDerecha ? 800.0f : -800.0f;
+        float alturaPechoY = y - 70.0f;
+        float offsetX = mirandoDerecha ? 65.0f : -20.0f;
+        return new Proyectil(x + offsetX, alturaPechoY, velocidadBalaX, 0.0f, true, TipoMovimientoProyectil::Rectilineo);
     }
+    return nullptr;
 }
 
 void jugador::mover(float dt) {
@@ -69,8 +83,18 @@ void jugador::mover(float dt) {
         vy = 0.0f;
         enAire = false;
     }
+    if (disparandoAnimacion) {
+        contadorFramesDisparo++;
+        if (contadorFramesDisparo >= 4) {
+            frameDisparo++;
+            contadorFramesDisparo = 0;
+            if (frameDisparo >= 6) {
+                frameDisparo = 0;
+                disparandoAnimacion = false;
+            }
+        }
+    }
 }
-
 
 
 void jugador::setVelocidadX(float nuevaVx) {
@@ -97,7 +121,18 @@ bool jugador::GETEnElAire() const {
     return enAire;
 }
 
+short jugador::GETMunicion() const{
+    return municion;
+}
+
 void jugador::setEnMovimiento(bool mov){
     enMovimiento=mov;
 }
 
+bool jugador::GETDisparandoAnim() const {
+    return disparandoAnimacion;
+}
+
+int jugador::GETFrameDisparo() const {
+    return frameDisparo;
+}
