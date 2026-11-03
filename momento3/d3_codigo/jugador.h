@@ -20,6 +20,10 @@ private:
     arma *armaJugador;
     bool disparandoAnimacion;
     int contadorAnimacionDisparo;
+    bool animacionpuno;
+    int frameGolpes;
+    int contadorFramesGolpes;
+    float cooldownDisparo;
 
 public:
     jugador(float posicionX, float posicionY);
@@ -35,6 +39,8 @@ public:
     short GETMunicion() const;
     bool GETDisparandoAnim() const;
     int GETFrameDisparo() const;
+    bool GETAnimacionGolpes() const;
+    int GETFrameGolpes() const;
 };
 
 #endif // JUGADOR_H

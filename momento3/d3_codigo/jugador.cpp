@@ -4,10 +4,11 @@
 static float direccionDeseada = 0.0f;
 
 jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicionY, 100) {
-    municion = 30;
+    municion = 5;
     pesoBase = 5.0f;
     enAire = false;
     armaJugador = new arma(1, 25, 800.0f, 10);
+    cooldownDisparo = 0.0f;
 }
 
 jugador::~jugador() {
@@ -22,15 +23,23 @@ void jugador::saltar() {
 }
 
 Proyectil* jugador::disparar() {
+    if (cooldownDisparo > 0.0f) {
+        return nullptr;
+    }
     if (municion > 0) {
         municion--;
         disparandoAnimacion = true;
         contadorAnimacionDisparo = 10;
-
+        cooldownDisparo = 0.25f;
         float velocidadBalaX = mirandoDerecha ? 800.0f : -800.0f;
         float alturaPechoY = y - 70.0f;
         float offsetX = mirandoDerecha ? 65.0f : -20.0f;
         return new Proyectil(x + offsetX, alturaPechoY, velocidadBalaX, 0.0f, true, TipoMovimientoProyectil::Rectilineo);
+    }else {
+        animacionpuno=true;
+        frameGolpes=0;
+        contadorFramesGolpes=0;
+        cooldownDisparo = 0.3f;
     }
     return nullptr;
 }
@@ -58,7 +67,11 @@ void jugador::mover(float dt) {
     if (!enAire && enMovimiento) {
         contadorFrames++;
         if (contadorFrames >= 5) {
-            frameActual = (frameActual + 1) % 12;
+            if (municion > 0) {
+                frameActual = (frameActual + 1) % 12;
+            } else {
+                frameActual = (frameActual + 1) % 12;
+            }
             contadorFrames = 0;
         }
     } else if (!enAire) {
@@ -94,8 +107,22 @@ void jugador::mover(float dt) {
             }
         }
     }
-}
+    if (cooldownDisparo > 0.0f) {
+        cooldownDisparo -= dt;
+    }
 
+    if (animacionpuno) {
+        contadorFramesGolpes++;
+        if (contadorFramesGolpes >= 5) {
+            frameGolpes++;
+            contadorFramesGolpes = 0;
+            if (frameGolpes >= 5) {
+                frameGolpes = 0;
+                animacionpuno = false;
+            }
+        }
+    }
+}
 
 void jugador::setVelocidadX(float nuevaVx) {
     if (nuevaVx > 0.0f) {
@@ -135,4 +162,12 @@ bool jugador::GETDisparandoAnim() const {
 
 int jugador::GETFrameDisparo() const {
     return frameDisparo;
+}
+
+bool jugador::GETAnimacionGolpes() const {
+    return animacionpuno;
+}
+
+int jugador::GETFrameGolpes() const {
+    return frameGolpes;
 }

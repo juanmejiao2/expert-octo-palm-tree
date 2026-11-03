@@ -82,16 +82,22 @@ void MainWindow::actualizarJuego(){
         enemigo->actualizar(jugador->GETX(), jugador->GETY());
 
         if (enemigo->puededisparar()) {
-            float velocidadBalaX = (jugador->GETX() < enemigo->GETX()) ? -600.0f : 600.0f;
+            float origenX = enemigo->GETX();
+            float origenY = enemigo->GETY() + 20;
+            float dirX = jugador->GETX() - origenX;
+            float dirY = jugador->GETY() - origenY;
+            float distancia = std::sqrt(dirX * dirX + dirY * dirY);
 
-            proyectiles.append(new Proyectil(
-            enemigo->GETX(),
-            enemigo->GETY() + 20,
-            velocidadBalaX,
-            0.0f,
-            false,
-            TipoMovimientoProyectil::Rectilineo));
+            float velocidadBala = 600.0f;
+            float velocidadBalaX = 600.0f;
+            float velocidadBalaY = 0.0f;
 
+            if (distancia > 0.0f) {
+                velocidadBalaX = (dirX / distancia) * velocidadBala;
+                velocidadBalaY = (dirY / distancia) * velocidadBala;
+            }
+
+            proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Rectilineo));
         }
     }
     update();
@@ -174,17 +180,23 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     float anchoTiraFila= 932.0f;
     int offsetXInicial= 4;
     int offsetPiesY= 0;
+    int spriteAlto = 97;
 
-    if (jugador->GETEnElAire()) {
+    if (jugador->GETAnimacionGolpes()) {
+        spriteY=251;
+        totalFramesFila =5;
+        anchoTiraFila= 475.0f;
+        offsetXInicial= 26;
+        indiceFrame = jugador->GETFrameGolpes() % totalFramesFila;
+
+    }else if (jugador->GETEnElAire()) {
         if (jugador->GETDisparandoAnim()) {
-            // --- DISPARO EN EL AIRE (Frame fijo de la balacera) ---
-            spriteY = 1779;          // Fila del disparo
+            spriteY = 1779;
             totalFramesFila = 6;
             anchoTiraFila = 780.0f;
             offsetXInicial = -4;
-            indiceFrame = 1;         // Frame 1 fijo para que muestre el fogonazo en el aire
+            indiceFrame = 1;
         } else {
-            // --- SALTO NORMAL ---
             spriteY = 1438;
             totalFramesFila = 3;
             anchoTiraFila = 185.0f;
@@ -198,22 +210,56 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 frameSaltoActual = (frameSaltoActual + 1) % 3;
                 temporizadorSalto = 0;
             }
-            indiceFrame = frameSaltoActual;
+            indiceFrame = frameSaltoActual;   
         }
     } else if (jugador->GETDisparandoAnim()) {
-        // --- DISPARO EN EL SUELO (Animación completa de 6 frames) ---
         spriteY = 1779;
         totalFramesFila = 6;
         anchoTiraFila = 780.0f;
         offsetXInicial = -4;
         indiceFrame = jugador->GETFrameDisparo() % 6;
+
     } else {
-        // --- SUELO NORMAL (Caminar / Quieto) ---
-        indiceFrame = jugador->GETFrameActual() % 12;
-        spriteY = 1669;
-        totalFramesFila = 12;
-        anchoTiraFila = 932.0f;
-        offsetXInicial = 4;
+        if (jugador->GETMunicion() > 0) {
+            if (jugador->GETFrameActual() > 0 && !jugador->GETEnElAire()) {
+                indiceFrame = jugador->GETFrameActual() % 12;
+                spriteY = 1669;
+                totalFramesFila = 12;
+                anchoTiraFila = 932.0f;
+                offsetXInicial = 4;
+            } else {
+                indiceFrame = 0;
+                spriteY = 1669;
+                totalFramesFila = 12;
+                anchoTiraFila = 932.0f;
+                offsetXInicial = 4;
+            }
+        } else {
+            if (jugador->GETFrameActual() > 0 && !jugador->GETEnElAire()) {
+                indiceFrame = jugador->GETFrameActual() % 12;
+                spriteY = 137;
+                spriteAlto = 87;
+                totalFramesFila = 12;
+                anchoTiraFila = 965.0f;
+                offsetXInicial = 24;
+
+            } else {
+                static int frameIdleSinBalas = 0;
+                static int contadorIdleSinBalas = 0;
+                contadorIdleSinBalas++;
+
+                if (contadorIdleSinBalas >= 15) {
+                    frameIdleSinBalas = (frameIdleSinBalas + 1) % 3;
+                    contadorIdleSinBalas = 0;
+                }
+                indiceFrame = frameIdleSinBalas;
+                spriteY = 18;
+                spriteAlto = 99;
+                totalFramesFila = 3;
+                anchoTiraFila = 245.0f;
+                offsetXInicial = 28;
+            }
+        }
     }
 
     if (camaraX > anchoMaximoNivel - width()) {
@@ -227,7 +273,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     int spriteX = offsetXInicial + qRound(indiceFrame * (anchoTiraFila / totalFramesFila));
     int siguienteX = offsetXInicial + qRound((indiceFrame + 1) * (anchoTiraFila / totalFramesFila));
     int spriteAncho = (siguienteX - spriteX) ;
-    int spriteAlto = 97;
+
 
     QPixmap framesPunisher = spriteSheetPunisher.copy(spriteX, spriteY, spriteAncho, spriteAlto);
 
@@ -241,6 +287,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
     int pantallaX = static_cast<int>(jugador->GETX() - camaraX);
     int offsetPisoVisual = 30;
+    if (jugador->GETMunicion() == 0 && !jugador->GETAnimacionGolpes()) {
+        offsetPisoVisual = 38;
+    }
     int pantallaY = static_cast<int>(jugador->GETY() - (spriteAlto * escalaAumento)) + offsetPisoVisual;
 
     painter.save();
@@ -276,7 +325,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     QFont fuenteHud("Arial", 16, QFont::Bold);
     painter.setFont(fuenteHud);
     painter.drawText(30, 40, "MUNICIÓN: " + QString::number(jugador->GETMunicion()));
-    painter.restore();
+
     for (Proyectil* p : proyectiles) {
         int projPantallaX = static_cast<int>(p->GETX() - camaraX);
         int projPantallaY = static_cast<int>(p->GETY());
