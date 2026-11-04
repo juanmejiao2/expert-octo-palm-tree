@@ -41,6 +41,7 @@ public:
     int GETFrameDisparo() const;
     bool GETAnimacionGolpes() const;
     int GETFrameGolpes() const;
+    bool GETEnMovimiento() const;
 };
 
 #endif // JUGADOR_H

@@ -66,7 +66,7 @@ void jugador::mover(float dt) {
     enMovimiento = (vx != 0.0f);
     if (!enAire && enMovimiento) {
         contadorFrames++;
-        if (contadorFrames >= 5) {
+        if (contadorFrames >= 6) {
             if (municion > 0) {
                 frameActual = (frameActual + 1) % 12;
             } else {
@@ -113,10 +113,10 @@ void jugador::mover(float dt) {
 
     if (animacionpuno) {
         contadorFramesGolpes++;
-        if (contadorFramesGolpes >= 5) {
+        if (contadorFramesGolpes >= 7) {
             frameGolpes++;
             contadorFramesGolpes = 0;
-            if (frameGolpes >= 5) {
+            if (frameGolpes >= 7) {
                 frameGolpes = 0;
                 animacionpuno = false;
             }
@@ -170,4 +170,7 @@ bool jugador::GETAnimacionGolpes() const {
 
 int jugador::GETFrameGolpes() const {
     return frameGolpes;
+}
+bool jugador::GETEnMovimiento() const {
+    return enMovimiento;
 }

@@ -174,91 +174,124 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         painter.drawPixmap(xPos, 0, fondoEscalado);
     }
 
-    int indiceFrame= 0;
-    int spriteY= 1669;
-    int totalFramesFila= 12;
-    float anchoTiraFila= 932.0f;
-    int offsetXInicial= 4;
-    int offsetPiesY= 0;
+    int indiceFrame = 0;
+    int spriteY = 1669;
+    int totalFramesFila = 12;
+    float anchoTiraFila = 932.0f;
+    int offsetXInicial = 4;
     int spriteAlto = 97;
+    int spriteX = 0;
+    int spriteAncho = 0;
+    bool usarcoordenadasmanuales=false;
 
     if (jugador->GETAnimacionGolpes()) {
-        spriteY=251;
-        totalFramesFila =5;
-        anchoTiraFila= 475.0f;
-        offsetXInicial= 26;
+        spriteY = 251;
+        spriteAlto = 88;
+        totalFramesFila = 5;
         indiceFrame = jugador->GETFrameGolpes() % totalFramesFila;
+        offsetXInicial = -1;
 
-    }else if (jugador->GETEnElAire()) {
-        if (jugador->GETDisparandoAnim()) {
-            spriteY = 1779;
-            totalFramesFila = 6;
-            anchoTiraFila = 780.0f;
-            offsetXInicial = -4;
-            indiceFrame = 1;
-        } else {
-            spriteY = 1438;
-            totalFramesFila = 3;
-            anchoTiraFila = 185.0f;
-            offsetXInicial = 362;
+        static const int coordenadasX[5] = {2, 180, 380, 587, 773};
+        static const int anchos[5]  = {77, 106, 89, 81, 76};
 
-            static int frameSaltoActual = 0;
-            static int temporizadorSalto = 0;
-
-            temporizadorSalto++;
-            if (temporizadorSalto >= 16) {
-                frameSaltoActual = (frameSaltoActual + 1) % 3;
-                temporizadorSalto = 0;
-            }
-            indiceFrame = frameSaltoActual;   
-        }
-    } else if (jugador->GETDisparandoAnim()) {
-        spriteY = 1779;
-        totalFramesFila = 6;
-        anchoTiraFila = 780.0f;
-        offsetXInicial = -4;
-        indiceFrame = jugador->GETFrameDisparo() % 6;
+        spriteX = coordenadasX[indiceFrame];
+        spriteAncho = anchos[indiceFrame];
+        usarcoordenadasmanuales = true;
 
     } else {
-        if (jugador->GETMunicion() > 0) {
-            if (jugador->GETFrameActual() > 0 && !jugador->GETEnElAire()) {
-                indiceFrame = jugador->GETFrameActual() % 12;
-                spriteY = 1669;
-                totalFramesFila = 12;
-                anchoTiraFila = 932.0f;
-                offsetXInicial = 4;
+        if (jugador->GETEnElAire()) {
+            if (jugador->GETDisparandoAnim()) {
+                spriteY=1779;
+                totalFramesFila=6;
+                anchoTiraFila=780.0f;
+                offsetXInicial= -4;
+                indiceFrame=1;
             } else {
-                indiceFrame = 0;
-                spriteY = 1669;
-                totalFramesFila = 12;
-                anchoTiraFila = 932.0f;
-                offsetXInicial = 4;
-            }
-        } else {
-            if (jugador->GETFrameActual() > 0 && !jugador->GETEnElAire()) {
-                indiceFrame = jugador->GETFrameActual() % 12;
-                spriteY = 137;
-                spriteAlto = 87;
-                totalFramesFila = 12;
-                anchoTiraFila = 965.0f;
-                offsetXInicial = 24;
+                spriteY=1438;
+                totalFramesFila=3;
+                anchoTiraFila=185.0f;
+                offsetXInicial=362;
 
-            } else {
-                static int frameIdleSinBalas = 0;
-                static int contadorIdleSinBalas = 0;
-                contadorIdleSinBalas++;
+                static int frameSaltoActual=0;
+                static int temporizadorSalto=0;
 
-                if (contadorIdleSinBalas >= 15) {
-                    frameIdleSinBalas = (frameIdleSinBalas + 1) % 3;
-                    contadorIdleSinBalas = 0;
+                temporizadorSalto++;
+                if (temporizadorSalto>=16) {
+                    frameSaltoActual=(frameSaltoActual+1) % 3;
+                    temporizadorSalto= 0;
                 }
-                indiceFrame = frameIdleSinBalas;
-                spriteY = 18;
-                spriteAlto = 99;
-                totalFramesFila = 3;
-                anchoTiraFila = 245.0f;
-                offsetXInicial = 28;
+                indiceFrame=frameSaltoActual;
             }
+        } else if (jugador->GETDisparandoAnim()) {
+            spriteY=1779;
+            totalFramesFila=6;
+            anchoTiraFila=780.0f;
+            offsetXInicial= -4;
+            indiceFrame=jugador->GETFrameDisparo() % 6;
+
+        } else {
+            if (jugador->GETMunicion() > 0) {
+                if (jugador->GETEnMovimiento() && !jugador->GETEnElAire()) {
+                    indiceFrame = jugador->GETFrameActual() % 12;
+                    spriteY= 1669;
+                    spriteAlto= 97;
+                    totalFramesFila= 12;
+                    anchoTiraFila= 932.0f;
+                    offsetXInicial= 4;
+
+                } else {
+                    spriteY = 2937;
+                    spriteAlto = 97;
+                    totalFramesFila = 2;
+
+                    static int frameIdlePistolaCustom = 0;
+                    static int contadorIdlePistola = 0;
+                    contadorIdlePistola++;
+
+                    if (contadorIdlePistola >= 60) {
+                        frameIdlePistolaCustom = (frameIdlePistolaCustom + 1) % 2;
+                        contadorIdlePistola = 0;
+                    }
+                    indiceFrame = frameIdlePistolaCustom;
+                    static const int coordsX[5] = {408, 21};
+                    static const int anchos[5]  = {64, 64};
+
+                    spriteX = coordsX[indiceFrame];
+                    spriteAncho = anchos[indiceFrame];
+
+                    usarcoordenadasmanuales = true;
+                }
+            } else {
+                if (jugador->GETEnMovimiento() && !jugador->GETEnElAire()) {
+                    indiceFrame= jugador->GETFrameActual() % 12;
+                    spriteY=137;
+                    spriteAlto=86;
+                    totalFramesFila=12;
+                    anchoTiraFila=1180.0f;
+                    offsetXInicial=3;
+
+                } else {
+                    static int frameIdleSinBalas= 0;
+                    static int contadorIdleSinBalas= 0;
+                    contadorIdleSinBalas++;
+
+                    if (contadorIdleSinBalas>=15) {
+                        frameIdleSinBalas=(frameIdleSinBalas+1)% 3;
+                        contadorIdleSinBalas=0;
+                    }
+                    indiceFrame=frameIdleSinBalas;
+                    spriteY=18;
+                    spriteAlto=99;
+                    totalFramesFila=3;
+                    anchoTiraFila=245.0f;
+                    offsetXInicial=28;
+                }
+            }
+        }
+        if (!usarcoordenadasmanuales) {
+            spriteX = offsetXInicial + qRound(indiceFrame * (anchoTiraFila / totalFramesFila));
+            int siguienteX = offsetXInicial + qRound((indiceFrame + 1) * (anchoTiraFila / totalFramesFila));
+            spriteAncho = (siguienteX - spriteX);
         }
     }
 
@@ -270,20 +303,13 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         camaraX = 0.0f;
     }
 
-    int spriteX = offsetXInicial + qRound(indiceFrame * (anchoTiraFila / totalFramesFila));
-    int siguienteX = offsetXInicial + qRound((indiceFrame + 1) * (anchoTiraFila / totalFramesFila));
-    int spriteAncho = (siguienteX - spriteX) ;
 
 
     QPixmap framesPunisher = spriteSheetPunisher.copy(spriteX, spriteY, spriteAncho, spriteAlto);
 
     float escalaAumento = 1.3f;
-    QPixmap framesPunisherEscalado = framesPunisher.scaled(
-        qRound(spriteAncho * escalaAumento),
-        qRound(spriteAlto * escalaAumento),
-        Qt::KeepAspectRatio,
-        Qt::SmoothTransformation
-        );
+
+    QPixmap framesPunisherEscalado = framesPunisher.scaled(qRound(spriteAncho * escalaAumento),qRound(spriteAlto * escalaAumento),Qt::KeepAspectRatio,Qt::SmoothTransformation);
 
     int pantallaX = static_cast<int>(jugador->GETX() - camaraX);
     int offsetPisoVisual = 30;
