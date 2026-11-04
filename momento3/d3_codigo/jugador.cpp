@@ -113,10 +113,10 @@ void jugador::mover(float dt) {
 
     if (animacionpuno) {
         contadorFramesGolpes++;
-        if (contadorFramesGolpes >= 7) {
+        if (contadorFramesGolpes >= 5) {
             frameGolpes++;
             contadorFramesGolpes = 0;
-            if (frameGolpes >= 7) {
+            if (frameGolpes >= 5) {
                 frameGolpes = 0;
                 animacionpuno = false;
             }
