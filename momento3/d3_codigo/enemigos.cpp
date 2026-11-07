@@ -68,3 +68,6 @@ EstadoEnemigo enemigo::GETEstado() const {
 bool enemigo::MostrarLaAlerta() const {
     return MostrarAlerta;
 }
+QRectF enemigo::GETHitbox() const {
+    return QRectF(x, y, 40.0f, 60.0f);
+}

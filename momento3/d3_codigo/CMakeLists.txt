@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(prueba_desafio3 VERSION 0.1 LANGUAGES CXX)
+project(D3_codigo VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -20,43 +20,38 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(prueba_desafio3
+    qt_add_executable(D3_codigo
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        entidad.h entidad.cpp
-        jugador.h jugador.cpp
-        enemigos.h enemigos.cpp
-
-        proyectil.h proyectil.cpp
-        arma.h arma.cpp
+        enemigos.cpp enemigos.h entidad.cpp entidad.h jugador.cpp jugador.h mainwindow.cpp mainwindow.h plataformas.cpp plataformas.h proyectil.cpp proyectil.h main.cpp mainwindow.ui arma.cpp arma.h
     )
 # Define target properties for Android with Qt 6 as:
-#    set_property(TARGET prueba_desafio3 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#    set_property(TARGET D3_codigo APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
 # For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
-        add_library(prueba_desafio3 SHARED
+        add_library(D3_codigo SHARED
             ${PROJECT_SOURCES}
         )
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(prueba_desafio3
+        add_executable(D3_codigo
             ${PROJECT_SOURCES}
         )
     endif()
 endif()
 
-target_link_libraries(prueba_desafio3 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(D3_codigo PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.prueba_desafio3)
+  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.D3_codigo)
 endif()
-set_target_properties(prueba_desafio3 PROPERTIES
+set_target_properties(D3_codigo PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -65,12 +60,12 @@ set_target_properties(prueba_desafio3 PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS prueba_desafio3
+install(TARGETS D3_codigo
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(prueba_desafio3)
+    qt_finalize_executable(D3_codigo)
 endif()

@@ -45,3 +45,6 @@ void Proyectil::movOscilatorio(float dt) {
 bool Proyectil::GETDeJugador() const {
     return deJugador;
 }
+QRectF Proyectil::GETHitbox() const {
+    return QRectF(x, y, 8.0f, 4.0f);
+}

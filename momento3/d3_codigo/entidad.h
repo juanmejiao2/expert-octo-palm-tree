@@ -1,5 +1,6 @@
 #ifndef ENTIDAD_H
 #define ENTIDAD_H
+#include <QRectF>
 
 class entidad{
 protected:
@@ -12,15 +13,13 @@ public:
     virtual ~entidad();
     virtual void mover(float dt);
     void recibirDanio(short cant);
-    void setX(float nuevaX) { x = nuevaX; }
-float GETX() const{
-    return x;
-    }
-
-float GETY() const{
-    return y;
-    }
-
+    void setX(float nuevaX);
+    virtual QRectF GETHitbox() const = 0;
+    float GETX() const;
+    float GETY() const;
+    void setY(float nuevaY);
+    void setVy(float nuevaVy);
+    float GETVy() const;
 };
 
 #endif // ENTIDAD_H

@@ -4,7 +4,7 @@
 static float direccionDeseada = 0.0f;
 
 jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicionY, 100) {
-    municion = 5;
+    municion = 50;
     pesoBase = 5.0f;
     enAire = false;
     armaJugador = new arma(1, 25, 800.0f, 10);
@@ -87,7 +87,7 @@ void jugador::mover(float dt) {
     y += vy * dt;
 
     if (x < 0.0f){
-    x = 0.0f;
+        x = 0.0f;
     }
 
     float sueloY = 660.0f;
@@ -136,6 +136,10 @@ void jugador::setVelocidadX(float nuevaVx) {
     }
 }
 
+QRectF jugador::GETHitbox() const{
+    return QRectF(x, y-70.0f, 50.0f, 90.0f);
+}
+
 bool jugador::GETmirandoDerecha() const{
     return mirandoDerecha;
 }
@@ -173,4 +177,7 @@ int jugador::GETFrameGolpes() const {
 }
 bool jugador::GETEnMovimiento() const {
     return enMovimiento;
+}
+void jugador::setEnAire(bool aire) {
+    enAire = aire;
 }

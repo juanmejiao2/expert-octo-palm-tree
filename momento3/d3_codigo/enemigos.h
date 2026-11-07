@@ -24,9 +24,9 @@ public:
     bool puededisparar();
     void disparar();
     void recibirdano(int dano);
-
     EstadoEnemigo GETEstado() const;
     bool MostrarLaAlerta() const;
+    QRectF GETHitbox() const override;
 };
 
 #endif // ENEMIGOS_H

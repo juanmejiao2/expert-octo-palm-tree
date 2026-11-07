@@ -20,3 +20,24 @@ void entidad::recibirDanio(short cant) {
     vida -= cant;
     if (vida < 0) vida = 0;
 }
+
+float entidad::GETX() const {
+    return x;
+}
+float entidad::GETY() const {
+    return y;
+}
+void entidad::setX(float nuevaX) {
+    x = nuevaX;
+}
+void entidad::setY(float nuevaY) {
+    y = nuevaY;
+}
+
+void entidad::setVy(float nuevaVy) {
+    vy = nuevaVy;
+}
+
+float entidad::GETVy() const {
+    return vy;
+}

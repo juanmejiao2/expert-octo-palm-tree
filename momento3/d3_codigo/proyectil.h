@@ -24,6 +24,7 @@ public:
     void movParabolico(float dt);
     void movOscilatorio(float dt);
     bool GETDeJugador() const;
+    QRectF GETHitbox() const override;
 };
 
 #endif // PROYECTIL_H

@@ -42,6 +42,8 @@ public:
     bool GETAnimacionGolpes() const;
     int GETFrameGolpes() const;
     bool GETEnMovimiento() const;
+    QRectF GETHitbox() const override;
+    void setEnAire(bool aire);
 };
 
 #endif // JUGADOR_H

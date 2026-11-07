@@ -6,6 +6,7 @@
 #include "jugador.h"
 #include "enemigos.h"
 #include "proyectil.h"
+#include "plataformas.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -38,5 +39,6 @@ private:
     QPixmap spriteSheetPunisher;
     QList<enemigo*> enemigos;
     QList<Proyectil*>proyectiles;
+    QList<plataformas*> Plataforma;
 };
 #endif // MAINWINDOW_H

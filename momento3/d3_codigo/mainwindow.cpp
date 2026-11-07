@@ -3,10 +3,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-{
+MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow){
     ui->setupUi(this);
 
     moviendoDerecha = false;
@@ -23,20 +20,50 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timer, &QTimer::timeout, this, &MainWindow::actualizarJuego);
     timer->start(16);
 
-    enemigos.append(new enemigo(800.0f, 400.0f, true));
-    enemigos.append(new enemigo(1600.0f, 350.0f, true));
+    enemigos.append(new enemigo(700.0f, 360.0f, true));
+    enemigos.append(new enemigo(1050.0f, 270.0f, true));;
+
+    Plataforma.clear();
+    Plataforma.append(new plataformas(300.0f, 520.0f, 220.0f, 20.0f));
+    Plataforma.append(new plataformas(650.0f, 420.0f, 250.0f, 20.0f));
+    Plataforma.append(new plataformas(1000.0f, 330.0f, 200.0f, 20.0f));
+
 }
 
 MainWindow::~MainWindow() {
     delete jugador;
     qDeleteAll(proyectiles);
     proyectiles.clear();
+    qDeleteAll(Plataforma);
+    Plataforma.clear();
     delete ui;
 }
 
 void MainWindow::actualizarJuego(){
     jugador->mover(0.016f);
 
+    bool enAlgunaPlataforma = false;
+
+    for (plataformas* plat : Plataforma) {
+        QRectF hitboxplataforma = plat->GETHitbox();
+        QRectF hitboxjugador = jugador->GETHitbox();
+        bool colisionX = (hitboxjugador .right() > hitboxplataforma.left() && hitboxjugador .left() < hitboxplataforma.right());
+
+        if (colisionX) {
+            float yPlataforma = plat->GETY();
+
+            if (jugador->GETY() >= yPlataforma - 10.0f && jugador->GETY() <= yPlataforma + 15.0f && jugador->GETVy() >= 0.0f) {
+                jugador->setY(yPlataforma);
+                jugador->setVy(0.0f);
+                jugador->setEnAire(false);
+                enAlgunaPlataforma = true;
+                break;
+            }
+        }
+    }
+    if (!enAlgunaPlataforma && jugador->GETY() < 660.0f) {
+        jugador->setEnAire(true);
+    }
     if (jugador->GETX() - camaraX > 640.0f) {
         camaraX = jugador->GETX() - 640.0f;
     }
@@ -72,12 +99,28 @@ void MainWindow::actualizarJuego(){
 
     for (int i = proyectiles.size() - 1; i >= 0; --i) {
         proyectiles[i]->mover(0.016f);
+        bool proyectilEliminado = false;
+
+        for (enemigo* enemigo : enemigos) {
+            if (enemigo->GETEstado() != EstadoEnemigo::destruido) {
+                QRectF hitboxenemigo= enemigo->GETHitbox();
+
+                if (proyectiles[i]->GETDeJugador() && hitboxenemigo.contains(QPointF(proyectiles[i]->GETX(), proyectiles[i]->GETY()))) {
+                    enemigo->recibirdano(25);
+                    delete proyectiles[i];
+                    proyectiles.removeAt(i);
+                    proyectilEliminado = true;
+                    break;
+                }
+            }
+        }
+        if (proyectilEliminado) continue;
+
         if (proyectiles[i]->GETX() < camaraX - 200 || proyectiles[i]->GETX() > camaraX + width() + 200) {
             delete proyectiles[i];
             proyectiles.removeAt(i);
         }
     }
-
     for (enemigo* enemigo : enemigos) {
         enemigo->actualizar(jugador->GETX(), jugador->GETY());
 
@@ -360,4 +403,10 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         painter.drawEllipse(projPantallaX, projPantallaY, 8, 4);
     }
 
+    for (plataformas* plat : Plataforma) {
+        int platX = static_cast<int>(plat->GETX() - camaraX);
+        int platY = static_cast<int>(plat->GETY());
+        QRectF caja = plat->GETHitbox();
+        painter.fillRect(platX, platY, static_cast<int>(caja.width()), static_cast<int>(caja.height()), Qt::darkGreen);
+    }
 }
