@@ -14,6 +14,8 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
 
     spriteSheetPunisher.load("Punisher_sprites.png");
     spriteToldo.load("toldo_rojo.png");
+    pixmapGo.load("GO.png");
+    spriteBalaRecoger.load("municion.png");
 
     jugador=new ::jugador(100.0f, 660.0f);
 
@@ -22,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     timer->start(16);
 
     Plataforma.clear();
+    //Primera parte del nivel
     Plataforma.append(new plataformas(300.0f, 530.0f, 160.0f, 20.0f));
     Plataforma.append(new plataformas(520.0f, 420.0f, 150.0f, 20.0f));
     Plataforma.append(new plataformas(700.0f, 340.0f, 140.0f, 20.0f));
@@ -33,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     Plataforma.append(new plataformas(1920.0f, 450.0f, 150.0f, 20.0f));
     Plataforma.append(new plataformas(2100.0f, 330.0f, 160.0f, 20.0f));
     Plataforma.append(new plataformas(2320.0f, 490.0f, 140.0f, 20.0f));
+    //Segunda parte del nivel
     Plataforma.append(new plataformas(2500.0f, 370.0f, 170.0f, 20.0f));
     Plataforma.append(new plataformas(2720.0f, 260.0f, 150.0f, 20.0f));
     Plataforma.append(new plataformas(2900.0f, 410.0f, 160.0f, 20.0f));
@@ -46,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     Plataforma.append(new plataformas(4500.0f, 320.0f, 160.0f, 20.0f));
     Plataforma.append(new plataformas(4720.0f, 470.0f, 140.0f, 20.0f));
     Plataforma.append(new plataformas(4900.0f, 350.0f, 180.0f, 20.0f));
+    //Tercera parte del nivel
     Plataforma.append(new plataformas(5120.0f, 430.0f, 150.0f, 20.0f));
     Plataforma.append(new plataformas(5300.0f, 290.0f, 170.0f, 20.0f));
     Plataforma.append(new plataformas(5520.0f, 400.0f, 160.0f, 20.0f));
@@ -59,21 +64,29 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     Plataforma.append(new plataformas(7280.0f, 490.0f, 180.0f, 20.0f));
     Plataforma.append(new plataformas(7500.0f, 360.0f, 160.0f, 20.0f));
 
+    balasEnMapa.clear();
+    balasEnMapa.append({700.0f, 310.0f, false});
+    balasEnMapa.append({2720.0f, 230.0f, false});
+    balasEnMapa.append({5920.0f, 450.0f, false});
+
     enemigos.clear();
-    enemigos.append(new enemigo(700.0f, 280.0f, true));
-    enemigos.append(new enemigo(1120.0f, 300.0f, true));
-    enemigos.append(new enemigo(1700.0f, 220.0f, true));
-    enemigos.append(new enemigo(2100.0f, 270.0f, true));
-    enemigos.append(new enemigo(2720.0f, 200.0f, true));
-    enemigos.append(new enemigo(3120.0f, 240.0f, true));
-    enemigos.append(new enemigo(3920.0f, 330.0f, true));
-    enemigos.append(new enemigo(4500.0f, 260.0f, true));
-    enemigos.append(new enemigo(4900.0f, 290.0f, true));
-    enemigos.append(new enemigo(5300.0f, 230.0f, true));
-    enemigos.append(new enemigo(5920.0f, 420.0f, true));
-    enemigos.append(new enemigo(6380.0f, 370.0f, true));
-    enemigos.append(new enemigo(6830.0f, 350.0f, true));
-    enemigos.append(new enemigo(7500.0f, 300.0f, true));
+    //Primeros enemigos del lvl
+    enemigos.append(new enemigo(700.0f, 230.0f, true));
+    enemigos.append(new enemigo(1120.0f, 280.0f, true));
+    enemigos.append(new enemigo(1700.0f, 200.0f, true));
+    enemigos.append(new enemigo(2100.0f, 230.0f, true));
+    //Segundos enemigos del lvl
+    enemigos.append(new enemigo(2720.0f, 170.0f, true));
+    enemigos.append(new enemigo(3120.0f, 200.0f, true));
+    enemigos.append(new enemigo(3920.0f, 300.0f, true));
+    enemigos.append(new enemigo(4500.0f, 220.0f, true));
+    enemigos.append(new enemigo(4900.0f, 250.0f, true));
+    //Ultimos enemigos antes de la boss fight :p
+    enemigos.append(new enemigo(5300.0f, 190.0f, true));
+    enemigos.append(new enemigo(5920.0f, 390.0f, true));
+    enemigos.append(new enemigo(6380.0f, 330.0f, true));
+    enemigos.append(new enemigo(6830.0f, 310.0f, true));
+    enemigos.append(new enemigo(7100.0f, 320.0f, true));
 }
 
 MainWindow::~MainWindow() {
@@ -113,11 +126,87 @@ void MainWindow::actualizarJuego(){
         jugador->setEnAire(true);
     }
 
+    if (jugador->GETAnimacionGolpes()) {
+        float anchoGolpe = 60.0f;
+        float altoGolpe = 50.0f;
+        float posXGolpe = jugador->GETX();
+
+        float posYTorso = jugador->GETY() - 65.0f;
+
+        if (jugador->GETmirandoDerecha()) {
+            posXGolpe = jugador->GETX() + 35.0f;
+        } else {
+            posXGolpe = jugador->GETX() - anchoGolpe - 10.0f;
+        }
+
+        QRectF hitboxGolpe(posXGolpe, jugador->GETY() + 10.0f, anchoGolpe, altoGolpe);
+
+        for (enemigo* en : enemigos) {
+            if (en->GETEstado() != EstadoEnemigo::destruido) {
+                if (hitboxGolpe.intersects(en->GETHitbox())) {
+                    en->recibirdano(25.0f);
+                }
+            }
+        }
+    }
+    static float tiempoFlote = 0.0f;
+    tiempoFlote += 0.1f;
+
+    for (int i = 0; i < balasEnMapa.size(); ++i) {
+        if (!balasEnMapa[i].recolectada) {
+            float offsetY = std::sin(tiempoFlote + i) * 6.0f;
+            float posYActual = balasEnMapa[i].yBase + offsetY;
+
+            QRectF hitboxBalaSuelo(balasEnMapa[i].x, posYActual, 20.0f, 25.0f);
+
+            if (jugador->GETHitbox().intersects(hitboxBalaSuelo)) {
+                int munActual = jugador->GETMunicion();
+                if (munActual < 6) {
+                    jugador->setMunicion(munActual + 1);
+                    balasEnMapa[i].recolectada = true;
+                }
+            }
+        }
+    }
+
     if (jugador->GETX() - camaraX > 640.0f) {
         camaraX = jugador->GETX() - 640.0f;
     }
     else if (jugador->GETX() - camaraX < 400.0f && camaraX > 0.0f) {
         camaraX = jugador->GETX() - 400.0f;
+    }
+
+    float limiteDerechoSectorActual = 2500.0f;
+    if (jugador->GETX() > 2500.0f && jugador->GETX() <= 5000.0f) {
+        limiteDerechoSectorActual = 5000.0f;
+    } else if (jugador->GETX() > 5000.0f && jugador->GETX() <= 7500.0f) {
+        limiteDerechoSectorActual = 7500.0f;
+    } else if (jugador->GETX() > 7500.0f) {
+        limiteDerechoSectorActual = 10000.0f;
+    }
+
+    enemigosEnSectorActual = 0;
+    for (enemigo* en : enemigos) {
+        if (en->GETEstado() != EstadoEnemigo::destruido) {
+            if (en->GETX() <= limiteDerechoSectorActual) {
+                enemigosEnSectorActual++;
+            }
+        }
+    }
+    sectorLimpio = (enemigosEnSectorActual == 0);
+
+    if (jugador->GETX() - camaraX > 640.0f) {
+        camaraX = jugador->GETX() - 640.0f;
+    }
+    else if (jugador->GETX() - camaraX < 400.0f && camaraX > 0.0f) {
+        camaraX = jugador->GETX() - 400.0f;
+    }
+    float camaraMaxPermitida = limiteDerechoSectorActual - width();
+    if (!sectorLimpio && camaraX > camaraMaxPermitida) {
+        camaraX = camaraMaxPermitida;
+        if (jugador->GETX() > camaraX + width() - 80.0f) {
+            jugador->setX(camaraX + width() - 80.0f);
+        }
     }
 
     QPixmap fondo1bog("BG_nivel1.png");
@@ -144,7 +233,28 @@ void MainWindow::actualizarJuego(){
 
     for (enemigo* enemigo : enemigos) {
         enemigo->actualizar(jugador->GETX(), jugador->GETY());
+        bool enemigoEnPantalla = (enemigo->GETX() >= camaraX && enemigo->GETX() <= camaraX + width());
+
+        if (enemigoEnPantalla && enemigo->puededisparar()) {
+            float origenX= enemigo->GETX();
+            float origenY= enemigo->GETY() + 20;
+            float dirX= jugador->GETX() - origenX;
+            float dirY= jugador->GETY() - origenY;
+            float distancia = std::sqrt(dirX * dirX + dirY * dirY);
+
+            float velocidadBala = 600.0f;
+            float velocidadBalaX = 600.0f;
+            float velocidadBalaY = 0.0f;
+
+            if (distancia > 0.0f) {
+                velocidadBalaX = (dirX / distancia) * velocidadBala;
+                velocidadBalaY = (dirY / distancia) * velocidadBala;
+            }
+
+            proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Rectilineo));
+        }
     }
+    update();
 
     for (int i = proyectiles.size() - 1; i >= 0; --i) {
         proyectiles[i]->mover(0.016f);
@@ -245,6 +355,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         Proyectil* nuevoProyectil = jugador->disparar();
         if (nuevoProyectil != nullptr) {
             proyectiles.append(nuevoProyectil);
+        } else {
+            if (jugador->GETAnimacionGolpes()) {
+                jugador->avanzarCombo();
+            } else {
+                jugador->iniciarGolpe();
+            }
         }
     }
 }
@@ -457,7 +573,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         if (enemigo->GETEstado() != EstadoEnemigo::destruido) {
             int enemigoPantallaX = static_cast<int>(enemigo->GETX() - camaraX);
             int enemigoPantallaY = static_cast<int>(enemigo->GETY());
-            painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 60, Qt::blue);
+            painter.fillRect(enemigoPantallaX, enemigoPantallaY, 50, 100, Qt::blue);
 
             if (enemigo->MostrarLaAlerta()) {
                 QFont fuenteAlerta("Arial", 50, QFont::Bold);
@@ -490,14 +606,46 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     }
 
     for (plataformas* plat : Plataforma) {
-        QRectF caja = plat->GETHitbox();
+        QRectF hbplat = plat->GETHitbox();
 
-        int platPantallaX = static_cast<int>(caja.x() - camaraX);
-        int platPantallaY = static_cast<int>(caja.y());
+        int platPantallaX = static_cast<int>(hbplat.x() - camaraX);
+        int platPantallaY = static_cast<int>(hbplat.y());
 
         int offsetVisualY = -5;
         int alturaVisualSprite = 60;
 
-        painter.drawPixmap(platPantallaX, platPantallaY + offsetVisualY,static_cast<int>(caja.width()), alturaVisualSprite,spriteToldo);
+        painter.drawPixmap(platPantallaX, platPantallaY + offsetVisualY,static_cast<int>(hbplat.width()), alturaVisualSprite,spriteToldo);
+    }
+    static float tiempoFlotePintar = 0.0f;
+    tiempoFlotePintar += 0.1f;
+
+    for (int i = 0; i < balasEnMapa.size(); ++i) {
+        if (!balasEnMapa[i].recolectada) {
+            float offsetY = std::sin(tiempoFlotePintar + i) * 6.0f;
+            int balaPantallaX = static_cast<int>(balasEnMapa[i].x - camaraX);
+            int balaPantallaY = static_cast<int>(balasEnMapa[i].yBase + offsetY);
+
+            if (balaPantallaX >= -30 && balaPantallaX <= width() + 30) {
+                painter.drawPixmap(balaPantallaX, balaPantallaY, 60, 70, spriteBalaRecoger);
+            }
+        }
+    }
+
+    if (sectorLimpio) {
+        static int contadorFramesGO = 0;
+        contadorFramesGO++;
+        if (contadorFramesGO < 180) {
+            if ((contadorFramesGO / 20) % 2 == 0) {
+                int anchoGo = 120;
+                int altoGo = 80;
+                int posX = width() - anchoGo - 20;
+                int posY = (height() - altoGo) / 2;
+
+                painter.drawPixmap(posX, posY, anchoGo, altoGo, pixmapGo);
+            }
+        }
+    } else {
+        static int contadorFramesGO = 0;
+        contadorFramesGO = 0;
     }
 }

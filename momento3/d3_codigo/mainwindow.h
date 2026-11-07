@@ -14,6 +14,12 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+struct BalaSuelo {
+    float x;
+    float yBase;
+    bool recolectada;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -38,9 +44,15 @@ private:
     float camaraX;
     QPixmap spriteSheetPunisher;
     QPixmap spriteToldo;
+    QPixmap spriteBalaRecoger;
     QList<enemigo*> enemigos;
     QList<Proyectil*>proyectiles;
     QList<plataformas*> Plataforma;
-
+    QList<BalaSuelo> balasEnMapa;
+    float limiteIzquierdoCamara = 0.0f;
+    float limiteDerechoCamara = 1400.0f;
+    bool sectorLimpio = false;
+    int enemigosEnSectorActual = 0;
+    QPixmap pixmapGo;
 };
 #endif // MAINWINDOW_H

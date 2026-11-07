@@ -44,6 +44,9 @@ public:
     bool GETEnMovimiento() const;
     QRectF GETHitbox() const override;
     void setEnAire(bool aire);
+    void setMunicion(short m);
+    void iniciarGolpe();
+    void avanzarCombo();
 };
 
 #endif // JUGADOR_H
