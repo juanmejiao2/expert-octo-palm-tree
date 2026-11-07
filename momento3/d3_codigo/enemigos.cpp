@@ -57,8 +57,10 @@ void enemigo::disparar() {
 }
 
 void enemigo::recibirdano(int dano) {
-    (void)dano;
-    estadoActual = EstadoEnemigo::destruido;
+    recibirDanio(static_cast<short>(dano));
+    if (vida <= 0) {
+        estadoActual = EstadoEnemigo::destruido;
+    }
 }
 
 EstadoEnemigo enemigo::GETEstado() const {
@@ -69,5 +71,5 @@ bool enemigo::MostrarLaAlerta() const {
     return MostrarAlerta;
 }
 QRectF enemigo::GETHitbox() const {
-    return QRectF(x, y, 40.0f, 60.0f);
+    return QRectF(x, y - 100.0f, 40.0f, 100.0f);
 }

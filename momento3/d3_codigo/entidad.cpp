@@ -41,3 +41,6 @@ void entidad::setVy(float nuevaVy) {
 float entidad::GETVy() const {
     return vy;
 }
+short entidad::GETVida() const {
+    return vida;
+}

@@ -33,7 +33,7 @@ Proyectil* jugador::disparar() {
         cooldownDisparo = 0.25f;
         float velocidadBalaX = mirandoDerecha ? 800.0f : -800.0f;
         float alturaPechoY = y - 70.0f;
-        float offsetX = mirandoDerecha ? 65.0f : -20.0f;
+        float offsetX = mirandoDerecha ? 35.0f : -15.0f;
         return new Proyectil(x + offsetX, alturaPechoY, velocidadBalaX, 0.0f, true, TipoMovimientoProyectil::Rectilineo);
     }else {
         animacionpuno=true;
@@ -124,6 +124,21 @@ void jugador::mover(float dt) {
     }
 }
 
+void jugador::iniciarGolpe() {
+    if (!animacionpuno) {
+        animacionpuno = true;
+        frameGolpes = 0;
+        contadorFramesGolpes = 0;
+    }
+}
+void jugador::avanzarCombo() {
+    if (animacionpuno) {
+        frameGolpes = (frameGolpes + 1) % 5;
+        contadorFramesGolpes = 0;
+    }
+}
+
+
 void jugador::setVelocidadX(float nuevaVx) {
     if (nuevaVx > 0.0f) {
         direccionDeseada = 1.0f;
@@ -140,19 +155,6 @@ QRectF jugador::GETHitbox() const{
     return QRectF(x, y-70.0f, 50.0f, 90.0f);
 }
 
-void jugador::iniciarGolpe() {
-    if (!animacionpuno) {
-        animacionpuno = true;
-        frameGolpes = 0;
-        contadorFramesGolpes = 0;
-    }
-}
-void jugador::avanzarCombo() {
-    if (animacionpuno) {
-        frameGolpes = (frameGolpes + 1) % 5;
-        contadorFramesGolpes = 0;
-    }
-}
 
 bool jugador::GETmirandoDerecha() const{
     return mirandoDerecha;
@@ -197,4 +199,15 @@ void jugador::setEnAire(bool aire) {
 }
 void jugador::setMunicion(short m) {
     municion = qMax((short)0, qMin((short)6, m));
+}
+void jugador::reiniciarJugador(float posX, float posY) {
+    x = posX;
+    y = posY;
+    vx = 0.0f;
+    vy = 0.0f;
+    vida = 100;
+    municion = 6;
+    enAire = false;
+    animacionpuno = false;
+    disparandoAnimacion = false;
 }

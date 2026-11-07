@@ -47,6 +47,7 @@ public:
     void setMunicion(short m);
     void iniciarGolpe();
     void avanzarCombo();
+    void reiniciarJugador(float posX, float posY);
 };
 
 #endif // JUGADOR_H

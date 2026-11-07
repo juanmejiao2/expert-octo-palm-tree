@@ -12,16 +12,38 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
 
     this->setFixedSize(1280,720);
 
+    juegoTerminado = false;
+    spriteGameOver.load("game_over.jpg");
     spriteSheetPunisher.load("Punisher_sprites.png");
     spriteToldo.load("toldo_rojo.png");
     pixmapGo.load("GO.png");
     spriteBalaRecoger.load("municion.png");
 
-    jugador=new ::jugador(100.0f, 660.0f);
+    jugador = nullptr;
 
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::actualizarJuego);
     timer->start(16);
+    reiniciarNivel();
+}
+
+void MainWindow::reiniciarNivel() {
+    if(jugador != nullptr){
+        delete jugador;
+        jugador=nullptr;
+    }
+    qDeleteAll(proyectiles);
+    proyectiles.clear();
+    qDeleteAll(Plataforma);
+    Plataforma.clear();
+    qDeleteAll(enemigos);
+    enemigos.clear();
+
+    camaraX = 0.0f;
+    juegoTerminado = false;
+    sectorLimpio = false;
+
+    jugador = new ::jugador(100.0f, 660.0f);
 
     Plataforma.clear();
     //Primera parte del nivel
@@ -65,28 +87,57 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     Plataforma.append(new plataformas(7500.0f, 360.0f, 160.0f, 20.0f));
 
     balasEnMapa.clear();
-    balasEnMapa.append({700.0f, 310.0f, false});
-    balasEnMapa.append({2720.0f, 230.0f, false});
+    // Parte 1
+    balasEnMapa.append({400.0f, 630.0f, false});
+    balasEnMapa.append({1600.0f, 630.0f, false});
+    balasEnMapa.append({2800.0f, 630.0f, false});
+    balasEnMapa.append({4200.0f, 630.0f, false});
+    balasEnMapa.append({5800.0f, 630.0f, false});
+    balasEnMapa.append({6900.0f, 630.0f, false});
+    // Parte 2
+    balasEnMapa.append({520.0f, 375.0f, false});
+    balasEnMapa.append({900.0f, 435.0f, false});
+    balasEnMapa.append({1300.0f, 455.0f, false});
+    balasEnMapa.append({1920.0f, 405.0f, false});
+    balasEnMapa.append({2720.0f, 215.0f, false});
+    balasEnMapa.append({3300.0f, 415.0f, false});
+    balasEnMapa.append({3920.0f, 345.0f, false});
+    balasEnMapa.append({4720.0f, 425.0f, false});
+    balasEnMapa.append({5300.0f, 245.0f, false});
+    balasEnMapa.append({5920.0f, 435.0f, false});
+    balasEnMapa.append({6600.0f, 235.0f, false});
+    balasEnMapa.append({7280.0f, 445.0f, false});
+    // Parte 3, antes de bossfight
+    balasEnMapa.append({5300.0f, 260.0f, false});
     balasEnMapa.append({5920.0f, 450.0f, false});
+    balasEnMapa.append({6600.0f, 250.0f, false});
+    balasEnMapa.append({7280.0f, 460.0f, false});
 
     enemigos.clear();
-    //Primeros enemigos del lvl
-    enemigos.append(new enemigo(700.0f, 230.0f, true));
-    enemigos.append(new enemigo(1120.0f, 280.0f, true));
-    enemigos.append(new enemigo(1700.0f, 200.0f, true));
-    enemigos.append(new enemigo(2100.0f, 230.0f, true));
+    //Todos los enemigos del piso
+    enemigos.append(new enemigo(600.0f, 660.0f, true));
+    enemigos.append(new enemigo(1500.0f, 660.0f, true));
+    enemigos.append(new enemigo(2600.0f, 660.0f, true));
+    enemigos.append(new enemigo(4000.0f, 660.0f, true));
+    enemigos.append(new enemigo(5600.0f, 660.0f, true));
+    enemigos.append(new enemigo(6700.0f, 660.0f, true));
+    //Primeros enemigos del lvl en plataformitas
+    enemigos.append(new enemigo(700.0f, 340.0f, true));
+    enemigos.append(new enemigo(1120.0f, 360.0f, true));
+    enemigos.append(new enemigo(1700.0f, 280.0f, true));
+    enemigos.append(new enemigo(2100.0f, 330.0f, true));
     //Segundos enemigos del lvl
-    enemigos.append(new enemigo(2720.0f, 170.0f, true));
-    enemigos.append(new enemigo(3120.0f, 200.0f, true));
-    enemigos.append(new enemigo(3920.0f, 300.0f, true));
-    enemigos.append(new enemigo(4500.0f, 220.0f, true));
-    enemigos.append(new enemigo(4900.0f, 250.0f, true));
+    enemigos.append(new enemigo(2720.0f, 260.0f, true));
+    enemigos.append(new enemigo(3120.0f, 300.0f, true));
+    enemigos.append(new enemigo(3920.0f, 390.0f, true));
+    enemigos.append(new enemigo(4500.0f, 320.0f, true));
+    enemigos.append(new enemigo(4900.0f, 350.0f, true));
     //Ultimos enemigos antes de la boss fight :p
-    enemigos.append(new enemigo(5300.0f, 190.0f, true));
-    enemigos.append(new enemigo(5920.0f, 390.0f, true));
-    enemigos.append(new enemigo(6380.0f, 330.0f, true));
-    enemigos.append(new enemigo(6830.0f, 310.0f, true));
-    enemigos.append(new enemigo(7100.0f, 320.0f, true));
+    enemigos.append(new enemigo(5300.0f, 290.0f, true));
+    enemigos.append(new enemigo(5920.0f, 480.0f, true));
+    enemigos.append(new enemigo(6380.0f, 430.0f, true));
+    enemigos.append(new enemigo(6830.0f, 410.0f, true));
+    enemigos.append(new enemigo(7050.0f, 320.0f, true));
 }
 
 MainWindow::~MainWindow() {
@@ -99,6 +150,17 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::actualizarJuego(){
+    if (juegoTerminado) {
+        update();
+        return;
+    }
+
+    if (jugador == nullptr || jugador->GETVida() <= 0) {
+        juegoTerminado = true;
+        update();
+        return;
+    }
+
     jugador->mover(0.016f);
 
     bool enAlgunaPlataforma = false;
@@ -107,7 +169,7 @@ void MainWindow::actualizarJuego(){
         QRectF hitboxplataforma = plat->GETHitbox();
         QRectF hitboxjugador = jugador->GETHitbox();
         float yPlataforma = plat->GETY();
-        float piesjugador = jugador->GETY();
+
         bool cayendo = (jugador->GETVy() >= 0.0f);
 
         bool tocandoArriba = (hitboxjugador.bottom() >= yPlataforma - 5.0f && hitboxjugador.bottom() <= yPlataforma + 8.0f);
@@ -127,24 +189,29 @@ void MainWindow::actualizarJuego(){
     }
 
     if (jugador->GETAnimacionGolpes()) {
-        float anchoGolpe = 60.0f;
-        float altoGolpe = 50.0f;
-        float posXGolpe = jugador->GETX();
+        int frameActualGolpe = jugador->GETFrameGolpes();
 
-        float posYTorso = jugador->GETY() - 65.0f;
+        if (frameActualGolpe >= 1 && frameActualGolpe <= 3) {
+            float anchoGolpe = 65.0f;
+            float altoGolpe = 45.0f;
+            float posXGolpe = 0.0f;
+            float posYTorso = jugador->GETY() - 85.0f;
 
-        if (jugador->GETmirandoDerecha()) {
-            posXGolpe = jugador->GETX() + 35.0f;
-        } else {
-            posXGolpe = jugador->GETX() - anchoGolpe - 10.0f;
-        }
+            if (jugador->GETmirandoDerecha()) {
+                posXGolpe = jugador->GETX() + 35.0f;
+            } else {
+                posXGolpe = jugador->GETX() - anchoGolpe - 10.0f;
+            }
 
-        QRectF hitboxGolpe(posXGolpe, jugador->GETY() + 10.0f, anchoGolpe, altoGolpe);
+            QRectF hitboxGolpe(posXGolpe, posYTorso, anchoGolpe, altoGolpe);
 
-        for (enemigo* en : enemigos) {
-            if (en->GETEstado() != EstadoEnemigo::destruido) {
-                if (hitboxGolpe.intersects(en->GETHitbox())) {
-                    en->recibirdano(25.0f);
+            for (enemigo* en : enemigos) {
+                if (en->GETEstado() != EstadoEnemigo::destruido) {
+                    if (hitboxGolpe.intersects(en->GETHitbox())) {
+                        en->recibirdano(10.0f);
+                        if (en->GETVida() <= 0) {
+                        }
+                    }
                 }
             }
         }
@@ -280,7 +347,7 @@ void MainWindow::actualizarJuego(){
             QRectF hitboxBala(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 8.0f, 4.0f);
 
             if (hitboxBala.intersects(jugador->GETHitbox())) {
-                //todavía no sé como hacer las barras de vida o la vida de los enemigos (o jefes), pero acá voy a darle daño a los enemigos, así como ellos lo tienen arriba :p
+                jugador->recibirDanio(10);
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
                 proyectilEliminado = true;
@@ -340,6 +407,13 @@ void MainWindow::actualizarJuego(){
 void MainWindow::keyPressEvent(QKeyEvent *event){
     if (event->isAutoRepeat()) return;
 
+    if (juegoTerminado) {
+        if (event->key() == Qt::Key_R || event->key() == Qt::Key_Return) {
+            reiniciarNivel();
+        }
+        return;
+    }
+
     if(event->key() == Qt::Key_Space){
         jugador->saltar();
     }
@@ -392,6 +466,25 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
+    if (juegoTerminado) {
+        if (!spriteGameOver.isNull()) {
+            painter.drawPixmap(0, 0, width(), height(), spriteGameOver);
+        } else {
+            painter.setBrush(Qt::black);
+            painter.setPen(Qt::NoPen);
+            painter.drawRect(0, 0, width(), height());
+
+            QFont fuenteGameOver("Courier New", 32, QFont::Bold);
+            painter.setFont(fuenteGameOver);
+            painter.setPen(Qt::white);
+            QString textoGO = "GAME OVER";
+            int anchoTexto = QFontMetrics(fuenteGameOver).horizontalAdvance(textoGO);
+            painter.drawText((width() - anchoTexto) / 2, height() / 2, textoGO);
+        }
+        return;
+    }
+
+
     QPixmap fondo1bog("BG_lvl1.jpg");
     QPixmap fondoEscalado = fondo1bog.scaledToHeight(height(), Qt::SmoothTransformation);
 
@@ -429,14 +522,14 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         spriteAlto = 88;
         totalFramesFila = 5;
         indiceFrame = jugador->GETFrameGolpes() % totalFramesFila;
-        offsetXInicial = -1;
+
 
         static const int coordenadasX[5] = {2, 180, 380, 587, 773};
         static const int anchos[5]  = {77, 106, 89, 81, 76};
 
         spriteX = coordenadasX[indiceFrame];
         spriteAncho = anchos[indiceFrame];
-        usarcoordenadasmanuales = true;
+
 
     } else {
         if (jugador->GETEnElAire()) {
@@ -464,10 +557,15 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             }
         } else if (jugador->GETDisparandoAnim()) {
             spriteY=1779;
-            totalFramesFila=6;
-            anchoTiraFila=780.0f;
-            offsetXInicial= -4;
-            indiceFrame=jugador->GETFrameDisparo() % 6;
+            spriteAlto = 97;
+            totalFramesFila = 6;
+            static const int coordsXDisparo[6] = {5, 135, 265, 395, 525, 655};
+            static const int anchosDisparo[6]  = {115, 115, 115, 115, 115, 115};
+
+            int frameDispIdx = jugador->GETFrameDisparo() % 6;
+            spriteX = coordsXDisparo[frameDispIdx];
+            spriteAncho = anchosDisparo[frameDispIdx];
+            usarcoordenadasmanuales = true;
 
         } else {
             if (jugador->GETMunicion() > 0) {
@@ -572,8 +670,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     for (enemigo* enemigo : enemigos) {
         if (enemigo->GETEstado() != EstadoEnemigo::destruido) {
             int enemigoPantallaX = static_cast<int>(enemigo->GETX() - camaraX);
-            int enemigoPantallaY = static_cast<int>(enemigo->GETY());
-            painter.fillRect(enemigoPantallaX, enemigoPantallaY, 50, 100, Qt::blue);
+            int enemigoPantallaY = static_cast<int>(enemigo->GETY() - 100);
+
+            painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 100, Qt::blue);
 
             if (enemigo->MostrarLaAlerta()) {
                 QFont fuenteAlerta("Arial", 50, QFont::Bold);
@@ -588,9 +687,18 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     }
 
     painter.setPen(Qt::white);
-    QFont fuenteHud("Arial", 16, QFont::Bold);
+    QFont fuenteHud("Arial", 14, QFont::Bold);
     painter.setFont(fuenteHud);
     painter.drawText(30, 40, "MUNICIÓN: " + QString::number(jugador->GETMunicion()));
+
+    painter.drawText(30, 75, "SALUD");
+    painter.setBrush(Qt::darkGray);
+    painter.setPen(Qt::white);
+    painter.drawRect(100, 55, 200, 22);
+
+    float porcentajeSalud = qMax(0.0f, static_cast<float>(jugador->GETVida()) / 100.0f);
+    painter.setBrush(Qt::red);
+    painter.drawRect(100, 55, static_cast<int>(200 * porcentajeSalud), 22);
 
     for (Proyectil* p : proyectiles) {
         int projPantallaX = static_cast<int>(p->GETX() - camaraX);
@@ -647,5 +755,42 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     } else {
         static int contadorFramesGO = 0;
         contadorFramesGO = 0;
+    }
+    if (juegoTerminado) {
+        painter.setBrush(Qt::black);
+        painter.setPen(Qt::NoPen);
+        painter.drawRect(0, 0, width(), height());
+
+        QFont fuenteGameOver("Courier New", 40, QFont::Bold);
+        painter.setFont(fuenteGameOver);
+        painter.setPen(Qt::white);
+
+        QString textoGO = "GAME OVER";
+        QFontMetrics fm(fuenteGameOver);
+        int anchoTextoGO = fm.horizontalAdvance(textoGO);
+        painter.drawText((width() - anchoTextoGO) / 2, 180, textoGO);
+
+        int calaveraAncho = 220;
+        int calaveraAlto = 240;
+        int calaveraX = (width() - calaveraAncho) / 2;
+        int calaveraY = 230;
+
+        if (!spriteGameOver.isNull()) {
+            painter.drawPixmap(calaveraX, calaveraY, calaveraAncho, calaveraAlto, spriteGameOver);
+        } else {
+            painter.setBrush(Qt::white);
+            painter.drawEllipse(calaveraX, calaveraY, calaveraAncho, 180);
+            painter.setBrush(Qt::black);
+            painter.drawRect(calaveraX + 60, calaveraY + 140, 20, 70);
+            painter.drawRect(calaveraX + 100, calaveraY + 140, 20, 70);
+            painter.drawRect(calaveraX + 140, calaveraY + 140, 20, 70);
+        }
+        QFont fuenteContinuar("Courier New", 16, QFont::Bold);
+        painter.setFont(fuenteContinuar);
+        painter.setPen(Qt::yellow);
+
+        QString textoContinuar = "PRESS [R] TO CONTINUE";
+        int anchoTextoCont = QFontMetrics(fuenteContinuar).horizontalAdvance(textoContinuar);
+        painter.drawText((width() - anchoTextoCont) / 2, 520, textoContinuar);
     }
 }

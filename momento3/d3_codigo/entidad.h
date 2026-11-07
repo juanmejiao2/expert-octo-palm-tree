@@ -20,6 +20,7 @@ public:
     void setY(float nuevaY);
     void setVy(float nuevaVy);
     float GETVy() const;
+    short GETVida() const;
 };
 
 #endif // ENTIDAD_H

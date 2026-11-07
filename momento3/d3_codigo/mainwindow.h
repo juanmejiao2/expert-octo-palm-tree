@@ -42,6 +42,7 @@ private:
     bool moviendoDerecha;
     bool moviendoIzquierda;
     float camaraX;
+    QPixmap spriteGameOver;
     QPixmap spriteSheetPunisher;
     QPixmap spriteToldo;
     QPixmap spriteBalaRecoger;
@@ -54,5 +55,7 @@ private:
     bool sectorLimpio = false;
     int enemigosEnSectorActual = 0;
     QPixmap pixmapGo;
+    bool juegoTerminado;
+    void reiniciarNivel();
 };
 #endif // MAINWINDOW_H
