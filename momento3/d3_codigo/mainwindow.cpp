@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     this->setFixedSize(1280,720);
 
     spriteSheetPunisher.load("Punisher_sprites.png");
+    spriteToldo.load("toldo_rojo.png");
 
     jugador=new ::jugador(100.0f, 660.0f);
 
@@ -20,14 +21,59 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     connect(timer, &QTimer::timeout, this, &MainWindow::actualizarJuego);
     timer->start(16);
 
-    enemigos.append(new enemigo(700.0f, 360.0f, true));
-    enemigos.append(new enemigo(1050.0f, 270.0f, true));;
-
     Plataforma.clear();
-    Plataforma.append(new plataformas(300.0f, 520.0f, 220.0f, 20.0f));
-    Plataforma.append(new plataformas(650.0f, 420.0f, 250.0f, 20.0f));
-    Plataforma.append(new plataformas(1000.0f, 330.0f, 200.0f, 20.0f));
+    Plataforma.append(new plataformas(300.0f, 530.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(520.0f, 420.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(700.0f, 340.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(900.0f, 480.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(1120.0f, 360.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(1300.0f, 500.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(1520.0f, 390.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(1700.0f, 280.0f, 180.0f, 20.0f));
+    Plataforma.append(new plataformas(1920.0f, 450.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(2100.0f, 330.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(2320.0f, 490.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(2500.0f, 370.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(2720.0f, 260.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(2900.0f, 410.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(3120.0f, 300.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(3300.0f, 460.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(3520.0f, 340.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(3700.0f, 510.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(3920.0f, 390.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(4100.0f, 270.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(4320.0f, 440.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(4500.0f, 320.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(4720.0f, 470.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(4900.0f, 350.0f, 180.0f, 20.0f));
+    Plataforma.append(new plataformas(5120.0f, 430.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(5300.0f, 290.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(5520.0f, 400.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(5700.0f, 320.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(5920.0f, 480.0f, 180.0f, 20.0f));
+    Plataforma.append(new plataformas(6150.0f, 350.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(6380.0f, 430.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(6600.0f, 280.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(6830.0f, 410.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(7050.0f, 320.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(7280.0f, 490.0f, 180.0f, 20.0f));
+    Plataforma.append(new plataformas(7500.0f, 360.0f, 160.0f, 20.0f));
 
+    enemigos.clear();
+    enemigos.append(new enemigo(700.0f, 280.0f, true));
+    enemigos.append(new enemigo(1120.0f, 300.0f, true));
+    enemigos.append(new enemigo(1700.0f, 220.0f, true));
+    enemigos.append(new enemigo(2100.0f, 270.0f, true));
+    enemigos.append(new enemigo(2720.0f, 200.0f, true));
+    enemigos.append(new enemigo(3120.0f, 240.0f, true));
+    enemigos.append(new enemigo(3920.0f, 330.0f, true));
+    enemigos.append(new enemigo(4500.0f, 260.0f, true));
+    enemigos.append(new enemigo(4900.0f, 290.0f, true));
+    enemigos.append(new enemigo(5300.0f, 230.0f, true));
+    enemigos.append(new enemigo(5920.0f, 420.0f, true));
+    enemigos.append(new enemigo(6380.0f, 370.0f, true));
+    enemigos.append(new enemigo(6830.0f, 350.0f, true));
+    enemigos.append(new enemigo(7500.0f, 300.0f, true));
 }
 
 MainWindow::~MainWindow() {
@@ -47,23 +93,26 @@ void MainWindow::actualizarJuego(){
     for (plataformas* plat : Plataforma) {
         QRectF hitboxplataforma = plat->GETHitbox();
         QRectF hitboxjugador = jugador->GETHitbox();
-        bool colisionX = (hitboxjugador .right() > hitboxplataforma.left() && hitboxjugador .left() < hitboxplataforma.right());
+        float yPlataforma = plat->GETY();
+        float piesjugador = jugador->GETY();
+        bool cayendo = (jugador->GETVy() >= 0.0f);
 
-        if (colisionX) {
-            float yPlataforma = plat->GETY();
+        bool tocandoArriba = (hitboxjugador.bottom() >= yPlataforma - 5.0f && hitboxjugador.bottom() <= yPlataforma + 8.0f);
+        float margenBorde = 20.0f;
+        bool colisionX = (hitboxjugador.right() - margenBorde > hitboxplataforma.left() && hitboxjugador.left() + margenBorde < hitboxplataforma.right());
 
-            if (jugador->GETY() >= yPlataforma - 10.0f && jugador->GETY() <= yPlataforma + 15.0f && jugador->GETVy() >= 0.0f) {
-                jugador->setY(yPlataforma);
-                jugador->setVy(0.0f);
-                jugador->setEnAire(false);
-                enAlgunaPlataforma = true;
-                break;
-            }
+        if (colisionX && cayendo && tocandoArriba) {
+            jugador->setY(yPlataforma-22.0f);
+            jugador->setVy(0.0f);
+            jugador->setEnAire(false);
+            enAlgunaPlataforma = true;
+            break;
         }
     }
     if (!enAlgunaPlataforma && jugador->GETY() < 660.0f) {
         jugador->setEnAire(true);
     }
+
     if (jugador->GETX() - camaraX > 640.0f) {
         camaraX = jugador->GETX() - 640.0f;
     }
@@ -100,12 +149,13 @@ void MainWindow::actualizarJuego(){
     for (int i = proyectiles.size() - 1; i >= 0; --i) {
         proyectiles[i]->mover(0.016f);
         bool proyectilEliminado = false;
+        QRectF hitboxBala(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 8.0f, 4.0f);
 
         for (enemigo* enemigo : enemigos) {
             if (enemigo->GETEstado() != EstadoEnemigo::destruido) {
-                QRectF hitboxenemigo= enemigo->GETHitbox();
+                QRectF hitboxenemigo = enemigo->GETHitbox();
 
-                if (proyectiles[i]->GETDeJugador() && hitboxenemigo.contains(QPointF(proyectiles[i]->GETX(), proyectiles[i]->GETY()))) {
+                if (proyectiles[i]->GETDeJugador() && hitboxBala.intersects(hitboxenemigo)) {
                     enemigo->recibirdano(25);
                     delete proyectiles[i];
                     proyectiles.removeAt(i);
@@ -115,6 +165,37 @@ void MainWindow::actualizarJuego(){
             }
         }
         if (proyectilEliminado) continue;
+
+        if (!proyectiles[i]->GETDeJugador()) {
+            QRectF hitboxBala(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 8.0f, 4.0f);
+
+            if (hitboxBala.intersects(jugador->GETHitbox())) {
+                //todavía no sé como hacer las barras de vida o la vida de los enemigos (o jefes), pero acá voy a darle daño a los enemigos, así como ellos lo tienen arriba :p
+                delete proyectiles[i];
+                proyectiles.removeAt(i);
+                proyectilEliminado = true;
+                break;
+            }
+        }
+        if (proyectilEliminado) continue;
+
+        if (proyectiles[i]->GETDeJugador()) {
+            for (plataformas* plat : Plataforma) {
+                if (hitboxBala.intersects(plat->GETHitbox())) {
+                    delete proyectiles[i];
+                    proyectiles.removeAt(i);
+                    proyectilEliminado = true;
+                    break;
+                }
+            }
+        }
+        if (proyectilEliminado) continue;
+
+        if (proyectiles[i]->GETY() >= 660.0f) {
+            delete proyectiles[i];
+            proyectiles.removeAt(i);
+            continue;
+        }
 
         if (proyectiles[i]->GETX() < camaraX - 200 || proyectiles[i]->GETX() > camaraX + width() + 200) {
             delete proyectiles[i];
@@ -403,10 +484,20 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         painter.drawEllipse(projPantallaX, projPantallaY, 8, 4);
     }
 
+    if (spriteToldo.isNull()) {
+        painter.setPen(Qt::red);
+        painter.drawText(width()/2, height()/2, "ERROR: No se encuentra toldo_rojo.png");
+    }
+
     for (plataformas* plat : Plataforma) {
-        int platX = static_cast<int>(plat->GETX() - camaraX);
-        int platY = static_cast<int>(plat->GETY());
         QRectF caja = plat->GETHitbox();
-        painter.fillRect(platX, platY, static_cast<int>(caja.width()), static_cast<int>(caja.height()), Qt::darkGreen);
+
+        int platPantallaX = static_cast<int>(caja.x() - camaraX);
+        int platPantallaY = static_cast<int>(caja.y());
+
+        int offsetVisualY = -5;
+        int alturaVisualSprite = 60;
+
+        painter.drawPixmap(platPantallaX, platPantallaY + offsetVisualY,static_cast<int>(caja.width()), alturaVisualSprite,spriteToldo);
     }
 }

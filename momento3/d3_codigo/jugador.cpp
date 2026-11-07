@@ -4,7 +4,7 @@
 static float direccionDeseada = 0.0f;
 
 jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicionY, 100) {
-    municion = 50;
+    municion = 5;
     pesoBase = 5.0f;
     enAire = false;
     armaJugador = new arma(1, 25, 800.0f, 10);

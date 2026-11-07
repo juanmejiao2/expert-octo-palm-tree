@@ -37,8 +37,10 @@ private:
     bool moviendoIzquierda;
     float camaraX;
     QPixmap spriteSheetPunisher;
+    QPixmap spriteToldo;
     QList<enemigo*> enemigos;
     QList<Proyectil*>proyectiles;
     QList<plataformas*> Plataforma;
+
 };
 #endif // MAINWINDOW_H
