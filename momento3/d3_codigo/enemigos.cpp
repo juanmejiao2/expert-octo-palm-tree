@@ -1,9 +1,15 @@
 #include "enemigos.h"
 #include <cmath>
 
-enemigo::enemigo(float _x, float _y, bool _tieneArma) : entidad(_x, _y, 100) {
+enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo) : entidad(_x, _y, 100) {
     estadoActual=EstadoEnemigo::idle;
-    rangoVision= 450.0f;
+    TipoEnemigo = _tipo;
+    if (TipoEnemigo == TipoEnemigoArma::lanzallamas) {
+        rangoVision = 200.0f;
+    } else {
+        rangoVision = 400.0f;
+    }
+
     TieneArma= _tieneArma;
     MostrarAlerta=false;
 
@@ -16,7 +22,21 @@ enemigo::~enemigo(){
 }
 
 void enemigo::mover(float dt){
-    (void)dt;
+    if (estadoActual == EstadoEnemigo::destruido) return;
+
+    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) {
+        vx = 0.0f;
+        return;
+    }
+    static float tiempoPatrulla = 0.0f;
+    tiempoPatrulla += dt;
+    float velocidadLenta = 30.0f;
+    if (estadoActual == EstadoEnemigo::idle || estadoActual == EstadoEnemigo::alerta) {
+        vx = std::sin(tiempoPatrulla * 1.5f + x) * velocidadLenta;
+    } else {
+        vx = 0.0f;
+    }
+    x += vx * dt;
 }
 
 void enemigo::actualizar(float xjugador, float yjugador){
@@ -71,5 +91,11 @@ bool enemigo::MostrarLaAlerta() const {
     return MostrarAlerta;
 }
 QRectF enemigo::GETHitbox() const {
+    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) {
+        return QRectF(x, y - 90.0f, 90.0f, 90.0f);
+    }
     return QRectF(x, y - 100.0f, 40.0f, 100.0f);
+}
+TipoEnemigoArma enemigo::GETTipoEnemigo() const {
+    return TipoEnemigo;
 }

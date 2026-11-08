@@ -9,6 +9,8 @@ jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicion
     enAire = false;
     armaJugador = new arma(1, 25, 800.0f, 10);
     cooldownDisparo = 0.0f;
+    animacionDano = false;
+    contadorDano = 0;
 }
 
 jugador::~jugador() {
@@ -122,6 +124,13 @@ void jugador::mover(float dt) {
             }
         }
     }
+    if (animacionDano) {
+        contadorDano++;
+        if (contadorDano >= 15) {
+            animacionDano = false;
+            contadorDano = 0;
+        }
+    }
 }
 
 void jugador::iniciarGolpe() {
@@ -131,13 +140,6 @@ void jugador::iniciarGolpe() {
         contadorFramesGolpes = 0;
     }
 }
-void jugador::avanzarCombo() {
-    if (animacionpuno) {
-        frameGolpes = (frameGolpes + 1) % 5;
-        contadorFramesGolpes = 0;
-    }
-}
-
 
 void jugador::setVelocidadX(float nuevaVx) {
     if (nuevaVx > 0.0f) {
@@ -152,7 +154,7 @@ void jugador::setVelocidadX(float nuevaVx) {
 }
 
 QRectF jugador::GETHitbox() const{
-    return QRectF(x, y-70.0f, 50.0f, 90.0f);
+    return QRectF(x+20.0f, y - 70.0f, 45.0f, 95.0f);
 }
 
 
@@ -210,4 +212,15 @@ void jugador::reiniciarJugador(float posX, float posY) {
     enAire = false;
     animacionpuno = false;
     disparandoAnimacion = false;
+}
+void jugador::recibirDanoJugador(short cantidadDano) {
+    vida -= cantidadDano;
+    if (vida < 0) vida = 0;
+
+    animacionDano = true;
+    contadorDano = 0;
+}
+
+bool jugador::GETAnimacionDano() const {
+    return animacionDano;
 }

@@ -115,29 +115,29 @@ void MainWindow::reiniciarNivel() {
 
     enemigos.clear();
     //Todos los enemigos del piso
-    enemigos.append(new enemigo(600.0f, 660.0f, true));
-    enemigos.append(new enemigo(1500.0f, 660.0f, true));
-    enemigos.append(new enemigo(2600.0f, 660.0f, true));
-    enemigos.append(new enemigo(4000.0f, 660.0f, true));
-    enemigos.append(new enemigo(5600.0f, 660.0f, true));
-    enemigos.append(new enemigo(6700.0f, 660.0f, true));
+    enemigos.append(new enemigo(600.0f, 660.0f, true, TipoEnemigoArma::conservador));
+    enemigos.append(new enemigo(1500.0f, 660.0f, true, TipoEnemigoArma::liberal));
+    enemigos.append(new enemigo(2600.0f, 660.0f, true, TipoEnemigoArma::lanzallamas));
+    enemigos.append(new enemigo(4000.0f, 660.0f, true, TipoEnemigoArma::lanzagranadas));
+    enemigos.append(new enemigo(5600.0f, 660.0f, true, TipoEnemigoArma::conservador));
+    enemigos.append(new enemigo(6700.0f, 660.0f, true, TipoEnemigoArma::liberal));
     //Primeros enemigos del lvl en plataformitas
-    enemigos.append(new enemigo(700.0f, 340.0f, true));
-    enemigos.append(new enemigo(1120.0f, 360.0f, true));
-    enemigos.append(new enemigo(1700.0f, 280.0f, true));
+    enemigos.append(new enemigo(700.0f, 340.0f, true, TipoEnemigoArma::lanzallamas));
+    enemigos.append(new enemigo(1120.0f, 360.0f, true, TipoEnemigoArma::conservador));
+    enemigos.append(new enemigo(1700.0f, 280.0f, true, TipoEnemigoArma::lanzallamas));
     enemigos.append(new enemigo(2100.0f, 330.0f, true));
     //Segundos enemigos del lvl
-    enemigos.append(new enemigo(2720.0f, 260.0f, true));
-    enemigos.append(new enemigo(3120.0f, 300.0f, true));
-    enemigos.append(new enemigo(3920.0f, 390.0f, true));
-    enemigos.append(new enemigo(4500.0f, 320.0f, true));
-    enemigos.append(new enemigo(4900.0f, 350.0f, true));
+    enemigos.append(new enemigo(2720.0f, 260.0f, true, TipoEnemigoArma::lanzallamas));
+    enemigos.append(new enemigo(3120.0f, 300.0f, true, TipoEnemigoArma::lanzagranadas));
+    enemigos.append(new enemigo(3920.0f, 390.0f, true, TipoEnemigoArma::liberal));
+    enemigos.append(new enemigo(4500.0f, 320.0f, true, TipoEnemigoArma::lanzallamas));
+    enemigos.append(new enemigo(4900.0f, 350.0f, true, TipoEnemigoArma::lanzagranadas));
     //Ultimos enemigos antes de la boss fight :p
-    enemigos.append(new enemigo(5300.0f, 290.0f, true));
-    enemigos.append(new enemigo(5920.0f, 480.0f, true));
-    enemigos.append(new enemigo(6380.0f, 430.0f, true));
-    enemigos.append(new enemigo(6830.0f, 410.0f, true));
-    enemigos.append(new enemigo(7050.0f, 320.0f, true));
+    enemigos.append(new enemigo(5300.0f, 290.0f, true, TipoEnemigoArma::lanzagranadas));
+    enemigos.append(new enemigo(5920.0f, 480.0f, true, TipoEnemigoArma::liberal));
+    enemigos.append(new enemigo(6380.0f, 430.0f, true, TipoEnemigoArma::conservador));
+    enemigos.append(new enemigo(6830.0f, 410.0f, true, TipoEnemigoArma::conservador));
+    enemigos.append(new enemigo(7050.0f, 320.0f, true, TipoEnemigoArma::lanzagranadas));
 }
 
 MainWindow::~MainWindow() {
@@ -192,15 +192,16 @@ void MainWindow::actualizarJuego(){
         int frameActualGolpe = jugador->GETFrameGolpes();
 
         if (frameActualGolpe >= 1 && frameActualGolpe <= 3) {
-            float anchoGolpe = 65.0f;
-            float altoGolpe = 45.0f;
+            float anchoGolpe = 50.0f;
+            float altoGolpe = 30.0f;
             float posXGolpe = 0.0f;
-            float posYTorso = jugador->GETY() - 85.0f;
+            float posYTorso = jugador->GETY() - 70.0f;
+            QRectF hbJugador = jugador->GETHitbox();
 
             if (jugador->GETmirandoDerecha()) {
-                posXGolpe = jugador->GETX() + 35.0f;
+                posXGolpe = jugador->GETX() +85.0f;
             } else {
-                posXGolpe = jugador->GETX() - anchoGolpe - 10.0f;
+                posXGolpe = jugador->GETX() - 20.0f;
             }
 
             QRectF hitboxGolpe(posXGolpe, posYTorso, anchoGolpe, altoGolpe);
@@ -303,24 +304,36 @@ void MainWindow::actualizarJuego(){
         bool enemigoEnPantalla = (enemigo->GETX() >= camaraX && enemigo->GETX() <= camaraX + width());
 
         if (enemigoEnPantalla && enemigo->puededisparar()) {
-            float origenX= enemigo->GETX();
-            float origenY= enemigo->GETY() + 20;
-            float dirX= jugador->GETX() - origenX;
-            float dirY= jugador->GETY() - origenY;
-            float distancia = std::sqrt(dirX * dirX + dirY * dirY);
+            float origenX = enemigo->GETX();
+            float origenY = enemigo->GETY() + 20;
+            TipoEnemigoArma tipo = enemigo->GETTipoEnemigo();
 
-            float velocidadBala = 600.0f;
-            float velocidadBalaX = 600.0f;
-            float velocidadBalaY = 0.0f;
-
-            if (distancia > 0.0f) {
-                velocidadBalaX = (dirX / distancia) * velocidadBala;
-                velocidadBalaY = (dirY / distancia) * velocidadBala;
+            if (tipo == TipoEnemigoArma::conservador || tipo == TipoEnemigoArma::liberal) {
+                float distanciaX = std::abs(jugador->GETX() - origenX);
+                if (distanciaX < 60.0f) {
+                    jugador->recibirDanoJugador(5);
+                }
             }
+            else if (tipo == TipoEnemigoArma::lanzallamas) {
+                float dirX = jugador->GETX() - origenX;
+                float velocidadBalaX = (dirX > 0) ? 350.0f : -350.0f;
+                proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, 0.0f, false, TipoMovimientoProyectil::Rectilineo));
+            }
+            else if (tipo == TipoEnemigoArma::lanzagranadas) {
+                float dirX = jugador->GETX() - origenX;
+                float velocidadBalaX = (dirX > 0) ? 220.0f : -220.0f;
+                float velocidadBalaY = -280.0f;
 
-            proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Rectilineo));
+                proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Parabolico));
+            }
+            else {
+                float dirX = jugador->GETX() - origenX;
+                float velocidadBalaX = (dirX > 0) ? 450.0f : -450.0f;
+                proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, 0.0f, false, TipoMovimientoProyectil::Rectilineo));
+            }
         }
     }
+
     update();
 
     for (int i = proyectiles.size() - 1; i >= 0; --i) {
@@ -347,7 +360,7 @@ void MainWindow::actualizarJuego(){
             QRectF hitboxBala(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 8.0f, 4.0f);
 
             if (hitboxBala.intersects(jugador->GETHitbox())) {
-                jugador->recibirDanio(10);
+                jugador->recibirDanoJugador(10);
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
                 proyectilEliminado = true;
@@ -429,15 +442,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         Proyectil* nuevoProyectil = jugador->disparar();
         if (nuevoProyectil != nullptr) {
             proyectiles.append(nuevoProyectil);
-        } else {
-            if (jugador->GETAnimacionGolpes()) {
-                jugador->avanzarCombo();
-            } else {
-                jugador->iniciarGolpe();
-            }
         }
     }
 }
+
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event) {
     if (event->isAutoRepeat()) return;
@@ -517,7 +525,14 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     int spriteAncho = 0;
     bool usarcoordenadasmanuales=false;
 
-    if (jugador->GETAnimacionGolpes()) {
+    if (jugador->GETAnimacionDano()) {
+        spriteY = 3053;
+        spriteX = 23;
+        spriteAncho = 71;
+        spriteAlto = 86;
+        usarcoordenadasmanuales = true;
+    }
+    else if (jugador->GETAnimacionGolpes()) {
         spriteY = 251;
         spriteAlto = 88;
         totalFramesFila = 5;
@@ -672,8 +687,15 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             int enemigoPantallaX = static_cast<int>(enemigo->GETX() - camaraX);
             int enemigoPantallaY = static_cast<int>(enemigo->GETY() - 100);
 
-            painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 100, Qt::blue);
-
+            if (enemigo->GETTipoEnemigo() == TipoEnemigoArma::conservador) {
+                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 100, Qt::blue);
+            } else if (enemigo->GETTipoEnemigo() == TipoEnemigoArma::liberal) {
+                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 100, Qt::red);
+            } else if (enemigo->GETTipoEnemigo() == TipoEnemigoArma::lanzallamas) {
+                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 45, 100, Qt::darkYellow);
+            } else {
+                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 80, 90, Qt::darkGray);
+            }
             if (enemigo->MostrarLaAlerta()) {
                 QFont fuenteAlerta("Arial", 50, QFont::Bold);
                 painter.setFont(fuenteAlerta);
@@ -756,6 +778,65 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         static int contadorFramesGO = 0;
         contadorFramesGO = 0;
     }
+
+
+
+    painter.save();
+
+    painter.setPen(QPen(Qt::green, 2, Qt::DashLine));
+    painter.setBrush(QColor(0, 255, 0, 40));
+    QRectF hbJugador = jugador->GETHitbox();
+    painter.drawRect(QRectF(hbJugador.x() - camaraX, hbJugador.y(), hbJugador.width(), hbJugador.height()));
+
+    if (jugador->GETAnimacionGolpes()) {
+        int frameActualGolpe = jugador->GETFrameGolpes();
+        if (frameActualGolpe >= 1 && frameActualGolpe <= 3) {
+            float anchoGolpe = 50.0f;
+            float altoGolpe = 30.0f;
+            float posYTorso = jugador->GETY() - 70.0f;
+            float posXGolpe = 0.0f;
+
+            if (jugador->GETmirandoDerecha()) {
+                posXGolpe = jugador->GETX() + 85.0f;
+            } else {
+                posXGolpe = jugador->GETX() - 20.0f;
+            }
+
+            QRectF hitboxGolpe(posXGolpe, posYTorso, anchoGolpe, altoGolpe);
+
+            painter.setPen(QPen(Qt::darkYellow, 2, Qt::SolidLine));
+            painter.setBrush(QColor(255, 165, 0, 80));
+            painter.drawRect(QRectF(hitboxGolpe.x() - camaraX, hitboxGolpe.y(), hitboxGolpe.width(), hitboxGolpe.height()));
+        }
+    }
+
+    painter.setPen(QPen(Qt::red, 2, Qt::DashLine));
+    painter.setBrush(QColor(255, 0, 0, 40));
+    for (enemigo* en : enemigos) {
+        if (en->GETEstado() != EstadoEnemigo::destruido) {
+            QRectF hbEnemigo = en->GETHitbox();
+            painter.drawRect(QRectF(hbEnemigo.x() - camaraX, hbEnemigo.y(), hbEnemigo.width(), hbEnemigo.height()));
+        }
+    }
+
+    for (Proyectil* p : proyectiles) {
+        int projPantallaX = static_cast<int>(p->GETX() - camaraX);
+        int projPantallaY = static_cast<int>(p->GETY());
+
+        if (p->GETDeJugador()) {
+            painter.setBrush(Qt::yellow);
+        } else {
+            painter.setBrush(Qt::red);
+        }
+        painter.drawEllipse(projPantallaX, projPantallaY, 12, 6);
+    }
+
+    painter.restore();
+
+
+
+
+
     if (juegoTerminado) {
         painter.setBrush(Qt::black);
         painter.setPen(Qt::NoPen);

@@ -24,6 +24,8 @@ private:
     int frameGolpes;
     int contadorFramesGolpes;
     float cooldownDisparo;
+    bool animacionDano;
+    int contadorDano;
 
 public:
     jugador(float posicionX, float posicionY);
@@ -46,8 +48,9 @@ public:
     void setEnAire(bool aire);
     void setMunicion(short m);
     void iniciarGolpe();
-    void avanzarCombo();
     void reiniciarJugador(float posX, float posY);
+    bool GETAnimacionDano() const;
+    void recibirDanoJugador(short cantidadDano);
 };
 
 #endif // JUGADOR_H
