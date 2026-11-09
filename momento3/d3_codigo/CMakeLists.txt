@@ -17,6 +17,18 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        entidad.h
+        jugador.cpp
+        jugador.h
+        enemigos.cpp
+        enemigos.h
+        proyectil.h
+        proyectil.cpp
+        arma.h
+        arma.cpp
+        plataformas.h
+        plataformas.cpp
+        recursos.rc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -52,6 +64,7 @@ if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.D3_codigo)
 endif()
 set_target_properties(D3_codigo PROPERTIES
+    OUTPUT_NAME "The Punisher - Devolviendo La Paz a Bogota"
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}

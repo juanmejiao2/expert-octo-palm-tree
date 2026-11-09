@@ -69,7 +69,7 @@ void MainWindow::reiniciarNivel() {
     Plataforma.append(new plataformas(2100.0f, 330.0f, 160.0f, 20.0f));
     Plataforma.append(new plataformas(2320.0f, 490.0f, 140.0f, 20.0f));
     //Segunda parte del nivel
-    Plataforma.append(new plataformas(2500.0f, 370.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(2600.0f, 370.0f, 170.0f, 20.0f));
     Plataforma.append(new plataformas(2720.0f, 260.0f, 150.0f, 20.0f));
     Plataforma.append(new plataformas(2900.0f, 410.0f, 160.0f, 20.0f));
     Plataforma.append(new plataformas(3120.0f, 300.0f, 140.0f, 20.0f));
@@ -353,8 +353,8 @@ void MainWindow::actualizarJuego(){
             if (tipo == TipoEnemigoArma::conservador || tipo == TipoEnemigoArma::liberal) {
                 float distanciaX = std::abs(jugador->GETX() - origenX);
                 float distanciaY = std::abs(jugador->GETY() - enemigo->GETY());
-                if (distanciaX < 55.0f && distanciaY < 50.0f) {
-                    jugador->recibirDanoJugador(12);
+                if (distanciaX < 90.0f && distanciaY < 60.0f) {
+                    jugador->recibirDanoJugador(10);
                 }
             }
                 else if (tipo == TipoEnemigoArma::esmadpistolon) {
@@ -385,8 +385,14 @@ void MainWindow::actualizarJuego(){
             }
             else if (tipo == TipoEnemigoArma::lanzagranadas) {
                 float dirX = jugador->GETX() - origenX;
-                float velocidadBalaX = (dirX > 0) ? 280.0f : -280.0f;
-                float velocidadBalaY = -350.0f;
+                float velocidadBalaX = dirX * 0.9f;
+                float velocidadBalaY = -450.0f;
+                if (velocidadBalaX > 450.0f) velocidadBalaX = 450.0f;
+                if (velocidadBalaX < -450.0f) velocidadBalaX = -450.0f;
+                if (std::abs(velocidadBalaX) < 180.0f) {
+                    velocidadBalaX = (dirX > 0) ? 180.0f : -180.0f;
+                }
+
                 proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Parabolico));
             }
         }
@@ -428,14 +434,33 @@ void MainWindow::actualizarJuego(){
             bool colisionConJugador = hitboxProyectilEnemigo.intersects(jugador->GETHitbox());
             bool tocaSuelo = (proyectiles[i]->GETY() >= 660.0f);
 
-            if (colisionConJugador || tocaSuelo) {
-                float radioExplosion = 110.0f;
-                float centroGranadaX = proyectiles[i]->GETX();
-                float centroGranadaY = proyectiles[i]->GETY();
-                QRectF areaExplosion(centroGranadaX - radioExplosion, centroGranadaY - radioExplosion, radioExplosion * 2.0f, radioExplosion * 2.0f);
+            bool tocaPlataforma = false;
+            for (plataformas* plat : Plataforma) {
+                if (hitboxProyectilEnemigo.intersects(plat->GETHitbox())) {
+                    tocaPlataforma = true;
+                    break;
+                }
+            }
 
-                if (areaExplosion.intersects(jugador->GETHitbox())) {
-                    jugador->recibirDanoJugador(40);
+            if (tocaSuelo || tocaPlataforma) {
+                delete proyectiles[i];
+                proyectiles.removeAt(i);
+                proyectilEliminado = true;
+                break;
+            }
+
+            if (colisionConJugador) {
+                if (proyectiles[i]->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico) {
+                    float radioExplosion = 110.0f;
+                    float centroGranadaX = proyectiles[i]->GETX();
+                    float centroGranadaY = proyectiles[i]->GETY();
+                    QRectF areaExplosion(centroGranadaX - radioExplosion, centroGranadaY - radioExplosion, radioExplosion * 2.0f, radioExplosion * 2.0f);
+
+                    if (areaExplosion.intersects(jugador->GETHitbox())) {
+                        jugador->recibirDanoJugador(40);
+                    }
+                } else {
+                    jugador->recibirDanoJugador(20);
                 }
 
                 delete proyectiles[i];
@@ -767,12 +792,28 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             int enemigoPantallaX = static_cast<int>(enemigo->GETX() - camaraX);
             int enemigoPantallaY = static_cast<int>(enemigo->GETY() - 100);
 
-            if (enemigo->GETTipoEnemigo() == TipoEnemigoArma::conservador) {
+            TipoEnemigoArma tipoEnemigo = enemigo->GETTipoEnemigo();
+            if (tipoEnemigo == TipoEnemigoArma::conservador) {
                 painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 100, Qt::blue);
-            } else if (enemigo->GETTipoEnemigo() == TipoEnemigoArma::liberal) {
+            } else if (tipoEnemigo == TipoEnemigoArma::liberal) {
                 painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 100, Qt::red);
-            } else if (enemigo->GETTipoEnemigo() == TipoEnemigoArma::lanzallamas) {
-                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 45, 100, Qt::darkYellow);
+            } else if (tipoEnemigo == TipoEnemigoArma::esmadpistolon) {
+                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 40, 100, QColor(70, 130, 180));
+            } else if (tipoEnemigo == TipoEnemigoArma::lanzallamas) {
+                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 45, 100, QColor(210, 105, 30));
+            } else if (tipoEnemigo == TipoEnemigoArma::lanzagranadas) {
+                painter.fillRect(enemigoPantallaX, enemigoPantallaY, 45, 100, QColor(85, 107, 47));
+            }
+            if (tipoEnemigo == TipoEnemigoArma::lanzallamas && enemigo->GETEstado() == EstadoEnemigo::disparando) {
+                float anchoLlama = 130.0f;
+                float altoLlama = 70.0f;
+                bool jugadorDerecha = (jugador->GETX() > enemigo->GETX());
+                float posXLlama = jugadorDerecha ? enemigo->GETX() : (enemigo->GETX() - anchoLlama);
+                QRectF areaLlamarada(posXLlama, enemigo->GETY() - 80.0f, anchoLlama, altoLlama);
+
+                painter.setPen(QPen(Qt::yellow, 2, Qt::SolidLine));
+                painter.setBrush(QColor(255, 140, 0, 90));
+                painter.drawRect(QRectF(areaLlamarada.x() - camaraX, areaLlamarada.y(), areaLlamarada.width(), areaLlamarada.height()));
             }
             if (enemigo->MostrarLaAlerta()) {
                 QFont fuenteAlerta("Arial", 50, QFont::Bold);
@@ -806,15 +847,12 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
         if (p->GETDeJugador()) {
             painter.setBrush(Qt::yellow);
-            painter.setPen(Qt::NoPen);
-            painter.drawEllipse(projPantallaX, projPantallaY, 8, 4);
+            painter.setPen(QPen(QColor(255, 140, 0), 2));
+            painter.drawEllipse(projPantallaX, projPantallaY, 10, 5);
         } else {
-            painter.setBrush(QColor(255, 69, 0));
-            painter.setPen(QPen(Qt::black, 1));
+            painter.setBrush(Qt::yellow);
+            painter.setPen(QPen(QColor(255, 140, 0), 2));
             painter.drawEllipse(projPantallaX - 6, projPantallaY - 6, 14, 14);
-            painter.setPen(QPen(Qt::red, 1, Qt::DashLine));
-            painter.setBrush(QColor(255, 0, 0, 15));
-            painter.drawEllipse(projPantallaX - 35, projPantallaY - 35, 70, 70);
         }
     }
 
@@ -866,67 +904,6 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         static int contadorFramesGO = 0;
         contadorFramesGO = 0;
     }
-
-
-//hitboxes y ya, esto lo quitamos después (no se muestran cuando hacen el daño, se muestran siempre ;_;
-    painter.save();
-
-    painter.setPen(QPen(Qt::green, 2, Qt::DashLine));
-    painter.setBrush(QColor(0, 255, 0, 30));
-    QRectF hbJugador = jugador->GETHitbox();
-    painter.drawRect(QRectF(hbJugador.x() - camaraX, hbJugador.y(), hbJugador.width(), hbJugador.height()));
-    for (enemigo* en : enemigos) {
-        if (en->GETEstado() != EstadoEnemigo::destruido) {
-            QRectF hbEnemigo = en->GETHitbox();
-            float enemigoPantallaX = hbEnemigo.x() - camaraX;
-            TipoEnemigoArma tipoEnemigo = en->GETTipoEnemigo();
-            painter.setPen(QPen(Qt::red, 2, Qt::SolidLine));
-            painter.setBrush(QColor(255, 0, 0, 40));
-            painter.drawRect(QRectF(enemigoPantallaX, hbEnemigo.y(), hbEnemigo.width(), hbEnemigo.height()));
-            if (tipoEnemigo == TipoEnemigoArma::conservador || tipoEnemigo == TipoEnemigoArma::liberal) {
-                QRectF rangoMelee(en->GETX() - 25.0f, en->GETY() - 80.0f, 55.0f, 80.0f);
-                painter.setPen(QPen(Qt::cyan, 1, Qt::DotLine));
-                painter.setBrush(QColor(0, 255, 255, 30));
-                painter.drawRect(QRectF(rangoMelee.x() - camaraX, rangoMelee.y(), rangoMelee.width(), rangoMelee.height()));
-            }
-            else if (tipoEnemigo == TipoEnemigoArma::lanzallamas) {
-                if (en->GETEstado() == EstadoEnemigo::disparando) {
-                    float anchoLlama = 130.0f;
-                    float altoLlama = 70.0f;
-                    bool jugadorDerecha = (jugador->GETX() > en->GETX());
-                    float posXLlama = jugadorDerecha ? en->GETX() : (en->GETX() - anchoLlama);
-                    QRectF areaLlamarada(posXLlama, en->GETY() - 80.0f, anchoLlama, altoLlama);
-
-                    painter.setPen(QPen(Qt::yellow, 2, Qt::SolidLine));
-                    painter.setBrush(QColor(255, 140, 0, 90));
-                    painter.drawRect(QRectF(areaLlamarada.x() - camaraX, areaLlamarada.y(), areaLlamarada.width(), areaLlamarada.height()));
-                }
-            }
-        }
-    }
-    for (Proyectil* p : proyectiles) {
-        int projPantallaX = static_cast<int>(p->GETX() - camaraX);
-        int projPantallaY = static_cast<int>(p->GETY());
-
-        if (p->GETDeJugador()) {
-            painter.setBrush(Qt::yellow);
-            painter.drawEllipse(projPantallaX, projPantallaY, 8, 4);
-        } else {
-            painter.setBrush(QColor(255, 69, 0));
-            painter.setPen(QPen(Qt::black, 1));
-            painter.drawEllipse(projPantallaX - 6, projPantallaY - 6, 14, 14);
-            painter.setPen(QPen(Qt::magenta, 1, Qt::DashLine));
-            painter.setBrush(QColor(255, 0, 255, 30));
-            float radioVisualAOE = 90.0f;
-            painter.drawEllipse(projPantallaX - radioVisualAOE, projPantallaY - radioVisualAOE, radioVisualAOE * 2.0f, radioVisualAOE * 2.0f);
-        }
-    }
-
-    painter.restore();
-
-
-
-
 
 
 

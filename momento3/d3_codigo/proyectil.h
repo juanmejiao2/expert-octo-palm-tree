@@ -25,6 +25,7 @@ public:
     void movOscilatorio(float dt);
     bool GETDeJugador() const;
     QRectF GETHitbox() const override;
+    TipoMovimientoProyectil GETTipoMovimiento() const;
 };
 
 #endif // PROYECTIL_H

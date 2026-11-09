@@ -48,3 +48,6 @@ bool Proyectil::GETDeJugador() const {
 QRectF Proyectil::GETHitbox() const {
     return QRectF(x, y, 8.0f, 4.0f);
 }
+TipoMovimientoProyectil Proyectil::GETTipoMovimiento() const{
+    return tipoMovimiento;
+}
