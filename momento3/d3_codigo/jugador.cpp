@@ -229,3 +229,6 @@ bool jugador::GETAnimacionDano() const {
 void jugador::setMaxMunicion(short maxM) {
     maxMunicion = maxM;
 }
+int jugador::GETMaxMunicion() const {
+    return maxMunicion;
+}

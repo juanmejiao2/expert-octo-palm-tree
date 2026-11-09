@@ -5,12 +5,7 @@
 
 enum EstadoEnemigo{ idle, alerta, disparando, destruido};
 
-enum TipoEnemigoArma {
-    conservador = 0,
-    liberal = 1,
-    lanzallamas = 2,
-    lanzagranadas = 3
-};
+enum TipoEnemigoArma {conservador = 0, liberal = 1, esmadpistolon =2, lanzallamas = 3, lanzagranadas = 4};
 
 class enemigo:public entidad{
 private:

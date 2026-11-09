@@ -1,13 +1,19 @@
 #include "enemigos.h"
 #include <cmath>
 
-enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, short vidaInicial) : entidad(_x, _y, 100) {
+enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, short vidaInicial) : entidad(_x, _y, vidaInicial) {
     estadoActual=EstadoEnemigo::idle;
     TipoEnemigo = _tipo;
+
     if (TipoEnemigo == TipoEnemigoArma::lanzallamas) {
         rangoVision = 220.0f;
-    } else {
-        rangoVision = 400.0f;
+    } else if (TipoEnemigo == TipoEnemigoArma::esmadpistolon ) {
+        rangoVision = 300.0f;
+    }else if(TipoEnemigo == TipoEnemigoArma::lanzagranadas){
+        rangoVision= 310.0f;
+    }
+    else {
+        rangoVision = 300.0f;
     }
 
     TieneArma= _tieneArma;
@@ -24,17 +30,18 @@ enemigo::~enemigo(){
 void enemigo::mover(float dt){
     if (estadoActual == EstadoEnemigo::destruido) return;
 
-    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) {
+    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas || TipoEnemigo == TipoEnemigoArma::esmadpistolon) {
         vx = 0.0f;
         return;
     }
-    static float tiempoPatrulla = 0.0f;
-    tiempoPatrulla += dt;
-    float velocidadLenta = 30.0f;
-    if (estadoActual == EstadoEnemigo::idle || estadoActual == EstadoEnemigo::alerta) {
-        vx = std::sin(tiempoPatrulla * 1.5f + x) * velocidadLenta;
+
+    if (estadoActual == EstadoEnemigo::alerta || estadoActual == EstadoEnemigo::disparando) {
+        float velocidadPresion = 45.0f;
+        vx = (TipoEnemigo == TipoEnemigoArma::conservador || TipoEnemigo == TipoEnemigoArma::liberal) ? 40.0f : 0.0f;
     } else {
-        vx = 0.0f;
+        static float tiempoPatrulla = 0.0f;
+        tiempoPatrulla += dt;
+        vx = std::sin(tiempoPatrulla * 1.5f + x) * 25.0f;
     }
     x += vx * dt;
 }
@@ -53,16 +60,9 @@ void enemigo::actualizar(float xjugador, float yjugador){
             temporizadoralerta.restart();
         }
         else if (estadoActual== EstadoEnemigo::alerta){
-            if (temporizadoralerta.elapsed()>1000){
+            if (temporizadoralerta.elapsed()>800){
                 estadoActual= EstadoEnemigo::disparando;
                 MostrarAlerta=false;
-            }
-        }
-        else if (estadoActual == EstadoEnemigo::disparando) {
-            TipoEnemigoArma tipo = GETTipoEnemigo();
-            int duracionFuego = (tipo == TipoEnemigoArma::lanzallamas) ? 600 : 200;
-
-            if (temporizadorDisparo.elapsed() > duracionFuego + 2400) {
                 temporizadorDisparo.restart();
             }
         }
@@ -74,9 +74,13 @@ void enemigo::actualizar(float xjugador, float yjugador){
 
 bool enemigo::puededisparar(){
     if (estadoActual !=EstadoEnemigo::disparando|| !TieneArma) return false;
+
     int intervaloDisparo = 2000;
-    if (TipoEnemigo == TipoEnemigoArma::lanzallamas) intervaloDisparo = 2500;
-    else if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) intervaloDisparo = 3000;
+    TipoEnemigoArma tipo = GETTipoEnemigo();
+
+    if (tipo == TipoEnemigoArma::lanzallamas) intervaloDisparo = 1000;
+    else if (tipo == TipoEnemigoArma::esmadpistolon) intervaloDisparo = 1500;
+    else if (tipo == TipoEnemigoArma::lanzagranadas) intervaloDisparo = 2500;
 
     if (temporizadorDisparo.elapsed() > intervaloDisparo){
         temporizadorDisparo.restart();

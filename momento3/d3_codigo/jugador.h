@@ -40,6 +40,7 @@ public:
     int GETFrameActual() const;
     void setEnMovimiento(bool mov);
     short GETMunicion() const;
+    int GETMaxMunicion() const;
     bool GETDisparandoAnim() const;
     int GETFrameDisparo() const;
     bool GETAnimacionGolpes() const;
