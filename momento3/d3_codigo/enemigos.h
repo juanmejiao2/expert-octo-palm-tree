@@ -25,7 +25,7 @@ private:
 
 public:
     enemigo();
-    enemigo(float _x, float _y, bool _tienearma=true, TipoEnemigoArma _tipo= TipoEnemigoArma::conservador);
+    enemigo(float _x, float _y, bool _tienearma=true, TipoEnemigoArma _tipo= TipoEnemigoArma::conservador, short vidaInicial = 100);
     virtual ~enemigo() override;
     virtual void mover(float dt) override;
     void actualizar(float xjugador, float yjugador);

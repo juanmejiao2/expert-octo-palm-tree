@@ -46,6 +46,7 @@ private:
     QPixmap spriteSheetPunisher;
     QPixmap spriteToldo;
     QPixmap spriteBalaRecoger;
+    QPixmap spritePantallaInicio;
     QList<enemigo*> enemigos;
     QList<Proyectil*>proyectiles;
     QList<plataformas*> Plataforma;
@@ -57,5 +58,7 @@ private:
     QPixmap pixmapGo;
     bool juegoTerminado;
     void reiniciarNivel();
+    bool enSeleccionDificultad;
+    int dificultadJuego;
 };
 #endif // MAINWINDOW_H

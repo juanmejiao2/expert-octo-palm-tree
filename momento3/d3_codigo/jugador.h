@@ -13,6 +13,7 @@ private:
     int contadorFrames;
     int contadorFramesDisparo;
     int frameDisparo;
+    short maxMunicion;
     short municion;
     float pesoBase;
     bool enAire;
@@ -47,6 +48,7 @@ public:
     QRectF GETHitbox() const override;
     void setEnAire(bool aire);
     void setMunicion(short m);
+    void setMaxMunicion(short maxM);
     void iniciarGolpe();
     void reiniciarJugador(float posX, float posY);
     bool GETAnimacionDano() const;

@@ -1,11 +1,11 @@
 #include "enemigos.h"
 #include <cmath>
 
-enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo) : entidad(_x, _y, 100) {
+enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, short vidaInicial) : entidad(_x, _y, 100) {
     estadoActual=EstadoEnemigo::idle;
     TipoEnemigo = _tipo;
     if (TipoEnemigo == TipoEnemigoArma::lanzallamas) {
-        rangoVision = 200.0f;
+        rangoVision = 220.0f;
     } else {
         rangoVision = 400.0f;
     }
@@ -45,6 +45,7 @@ void enemigo::actualizar(float xjugador, float yjugador){
 
     float distanciaX= xjugador-x;
     float distanciaAbsX= std::abs(distanciaX);
+
     if (distanciaAbsX <= rangoVision){
         if (estadoActual==EstadoEnemigo::idle){
             estadoActual=EstadoEnemigo::alerta;
@@ -57,6 +58,14 @@ void enemigo::actualizar(float xjugador, float yjugador){
                 MostrarAlerta=false;
             }
         }
+        else if (estadoActual == EstadoEnemigo::disparando) {
+            TipoEnemigoArma tipo = GETTipoEnemigo();
+            int duracionFuego = (tipo == TipoEnemigoArma::lanzallamas) ? 600 : 200;
+
+            if (temporizadorDisparo.elapsed() > duracionFuego + 2400) {
+                temporizadorDisparo.restart();
+            }
+        }
     }else{
         estadoActual=EstadoEnemigo::idle;
         MostrarAlerta=false;
@@ -65,8 +74,11 @@ void enemigo::actualizar(float xjugador, float yjugador){
 
 bool enemigo::puededisparar(){
     if (estadoActual !=EstadoEnemigo::disparando|| !TieneArma) return false;
+    int intervaloDisparo = 2000;
+    if (TipoEnemigo == TipoEnemigoArma::lanzallamas) intervaloDisparo = 2500;
+    else if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) intervaloDisparo = 3000;
 
-    if (temporizadorDisparo.elapsed()>1500){
+    if (temporizadorDisparo.elapsed() > intervaloDisparo){
         temporizadorDisparo.restart();
         return true;
     }
@@ -91,7 +103,7 @@ bool enemigo::MostrarLaAlerta() const {
     return MostrarAlerta;
 }
 QRectF enemigo::GETHitbox() const {
-    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) {
+    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas || TipoEnemigo == TipoEnemigoArma::lanzallamas) {
         return QRectF(x, y - 90.0f, 90.0f, 90.0f);
     }
     return QRectF(x, y - 100.0f, 40.0f, 100.0f);

@@ -5,6 +5,7 @@ static float direccionDeseada = 0.0f;
 
 jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicionY, 100) {
     municion = 6;
+    maxMunicion = 6;
     pesoBase = 5.0f;
     enAire = false;
     armaJugador = new arma(1, 25, 800.0f, 10);
@@ -200,7 +201,7 @@ void jugador::setEnAire(bool aire) {
     enAire = aire;
 }
 void jugador::setMunicion(short m) {
-    municion = qMax((short)0, qMin((short)6, m));
+    municion = qMax((short)0, qMin(maxMunicion, m));
 }
 void jugador::reiniciarJugador(float posX, float posY) {
     x = posX;
@@ -223,4 +224,8 @@ void jugador::recibirDanoJugador(short cantidadDano) {
 
 bool jugador::GETAnimacionDano() const {
     return animacionDano;
+}
+
+void jugador::setMaxMunicion(short maxM) {
+    maxMunicion = maxM;
 }
