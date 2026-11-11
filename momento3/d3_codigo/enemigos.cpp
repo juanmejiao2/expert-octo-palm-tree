@@ -4,6 +4,7 @@
 enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, short vidaInicial) : entidad(_x, _y, vidaInicial) {
     estadoActual=EstadoEnemigo::idle;
     TipoEnemigo = _tipo;
+    tiempoPatrulla = _x * 0.01f;
 
     if (TipoEnemigo == TipoEnemigoArma::lanzallamas) {
         rangoVision = 220.0f;
@@ -30,21 +31,20 @@ enemigo::~enemigo(){
 void enemigo::mover(float dt){
     if (estadoActual == EstadoEnemigo::destruido) return;
 
-    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas || TipoEnemigo == TipoEnemigoArma::esmadpistolon) {
+    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) {
         vx = 0.0f;
         return;
     }
-
+    
     if (estadoActual == EstadoEnemigo::alerta || estadoActual == EstadoEnemigo::disparando) {
-        float velocidadPresion = 45.0f;
-        vx = (TipoEnemigo == TipoEnemigoArma::conservador || TipoEnemigo == TipoEnemigoArma::liberal) ? 40.0f : 0.0f;
+        vx = (TipoEnemigo == TipoEnemigoArma::conservador || TipoEnemigo == TipoEnemigoArma::liberal) ? 35.0f : 0.0f;
     } else {
-        static float tiempoPatrulla = 0.0f;
         tiempoPatrulla += dt;
-        vx = std::sin(tiempoPatrulla * 1.5f + x) * 25.0f;
+        vx = std::sin(tiempoPatrulla * 2.0f) * 20.0f;
     }
     x += vx * dt;
 }
+
 
 void enemigo::actualizar(float xjugador, float yjugador){
 

@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     pixmapGo.load("GO.png");
     spriteBalaRecoger.load("municion.png");
     spritePantallaInicio.load("pantalla_inicio.jpg");
-
+    spriteExplosion.load("explosion.png");
     jugador = nullptr;
 
     timer = new QTimer(this);
@@ -48,132 +48,145 @@ void MainWindow::reiniciarNivel() {
 
     jugador = new ::jugador(100.0f, 660.0f);
     if (dificultadJuego == 0) {
-        jugador->setMaxMunicion(8);
-        jugador->setMunicion(8);
+        jugador->setMaxMunicion(12);
+        jugador->setMunicion(12);
     } else {
-        jugador->setMaxMunicion(6);
-        jugador->setMunicion(6);
+        jugador->setMaxMunicion(10);
+        jugador->setMunicion(10);
     }
 
     Plataforma.clear();
     //Primera parte del nivel
-    Plataforma.append(new plataformas(300.0f, 530.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(520.0f, 420.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(700.0f, 340.0f, 140.0f, 20.0f));
-    Plataforma.append(new plataformas(900.0f, 480.0f, 170.0f, 20.0f));
-    Plataforma.append(new plataformas(1120.0f, 360.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(1300.0f, 500.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(1520.0f, 390.0f, 140.0f, 20.0f));
-    Plataforma.append(new plataformas(1700.0f, 280.0f, 180.0f, 20.0f));
-    Plataforma.append(new plataformas(1920.0f, 450.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(2100.0f, 330.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(2320.0f, 490.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(280.0f, 420.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(500.0f, 200.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(740.0f, 360.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(960.0f, 170.0f, 130.0f, 20.0f));
+    Plataforma.append(new plataformas(1200.0f, 350.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(1440.0f, 190.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(1670.0f, 420.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(1900.0f, 160.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(2140.0f, 320.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(2360.0f, 180.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(170.0f, 510.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(620.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(1080.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(1550.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(2020.0f, 480.0f, 90.0f, 20.0f));
     //Segunda parte del nivel
-    Plataforma.append(new plataformas(2600.0f, 370.0f, 170.0f, 20.0f));
-    Plataforma.append(new plataformas(2720.0f, 260.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(2900.0f, 410.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(3120.0f, 300.0f, 140.0f, 20.0f));
-    Plataforma.append(new plataformas(3300.0f, 460.0f, 170.0f, 20.0f));
-    Plataforma.append(new plataformas(3520.0f, 340.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(3700.0f, 510.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(3920.0f, 390.0f, 140.0f, 20.0f));
-    Plataforma.append(new plataformas(4100.0f, 270.0f, 170.0f, 20.0f));
-    Plataforma.append(new plataformas(4320.0f, 440.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(4500.0f, 320.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(4720.0f, 470.0f, 140.0f, 20.0f));
-    Plataforma.append(new plataformas(4900.0f, 350.0f, 180.0f, 20.0f));
+    Plataforma.append(new plataformas(2600.0f, 370.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(2820.0f, 180.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(3060.0f, 340.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(3280.0f, 160.0f, 130.0f, 20.0f));
+    Plataforma.append(new plataformas(3520.0f, 400.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(3740.0f, 200.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(3980.0f, 350.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(4220.0f, 170.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(4460.0f, 380.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(4680.0f, 190.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(4920.0f, 310.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(5140.0f, 150.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(2710.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(3170.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(3630.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(4100.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(4570.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(5030.0f, 480.0f, 90.0f, 20.0f));
     //Tercera parte del nivel
-    Plataforma.append(new plataformas(5120.0f, 430.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(5300.0f, 290.0f, 170.0f, 20.0f));
-    Plataforma.append(new plataformas(5520.0f, 400.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(5700.0f, 320.0f, 140.0f, 20.0f));
-    Plataforma.append(new plataformas(5920.0f, 480.0f, 180.0f, 20.0f));
-    Plataforma.append(new plataformas(6150.0f, 350.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(6380.0f, 430.0f, 160.0f, 20.0f));
-    Plataforma.append(new plataformas(6600.0f, 280.0f, 140.0f, 20.0f));
-    Plataforma.append(new plataformas(6830.0f, 410.0f, 170.0f, 20.0f));
-    Plataforma.append(new plataformas(7050.0f, 320.0f, 150.0f, 20.0f));
-    Plataforma.append(new plataformas(7280.0f, 490.0f, 180.0f, 20.0f));
-    Plataforma.append(new plataformas(7500.0f, 360.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(5360.0f, 360.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(5580.0f, 180.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(5820.0f, 340.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(6040.0f, 160.0f, 170.0f, 20.0f));
+    Plataforma.append(new plataformas(6280.0f, 390.0f, 130.0f, 20.0f));
+    Plataforma.append(new plataformas(6500.0f, 190.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(6740.0f, 320.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(6960.0f, 150.0f, 140.0f, 20.0f));
+    Plataforma.append(new plataformas(7200.0f, 370.0f, 150.0f, 20.0f));
+    Plataforma.append(new plataformas(7420.0f, 180.0f, 160.0f, 20.0f));
+    Plataforma.append(new plataformas(7640.0f, 400.0f, 130.0f, 20.0f));
+    Plataforma.append(new plataformas(5470.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(5930.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(6390.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(6850.0f, 480.0f, 90.0f, 20.0f));
+    Plataforma.append(new plataformas(7310.0f, 480.0f, 90.0f, 20.0f));
 
     balasEnMapa.clear();
     if (dificultadJuego==0){
-    // Parte 1, en modo facil (las 3 partes)
-    balasEnMapa.append({400.0f, 630.0f, false});
-    balasEnMapa.append({1600.0f, 630.0f, false});
-    balasEnMapa.append({2800.0f, 630.0f, false});
-    balasEnMapa.append({4200.0f, 630.0f, false});
-    balasEnMapa.append({5800.0f, 630.0f, false});
-    balasEnMapa.append({6900.0f, 630.0f, false});
-    // Parte 2
-    balasEnMapa.append({520.0f, 375.0f, false});
-    balasEnMapa.append({900.0f, 435.0f, false});
-    balasEnMapa.append({1300.0f, 455.0f, false});
-    balasEnMapa.append({1920.0f, 405.0f, false});
-    balasEnMapa.append({2720.0f, 215.0f, false});
-    balasEnMapa.append({3300.0f, 415.0f, false});
-    balasEnMapa.append({3920.0f, 345.0f, false});
-    balasEnMapa.append({4720.0f, 425.0f, false});
-    balasEnMapa.append({5300.0f, 245.0f, false});
-    balasEnMapa.append({5920.0f, 435.0f, false});
-    balasEnMapa.append({6600.0f, 235.0f, false});
-    balasEnMapa.append({7280.0f, 445.0f, false});
-    // Parte 3, antes de bossfight
-    balasEnMapa.append({5300.0f, 260.0f, false});
-    balasEnMapa.append({5920.0f, 450.0f, false});
-    balasEnMapa.append({6600.0f, 250.0f, false});
-    balasEnMapa.append({7280.0f, 460.0f, false});
+        // Parte 1, en modo facil (las 3 partes)
+        balasEnMapa.append({350.0f, 630.0f, false});
+        balasEnMapa.append({1500.0f, 630.0f, false});
+        balasEnMapa.append({2700.0f, 630.0f, false});
+        balasEnMapa.append({4100.0f, 630.0f, false});
+        balasEnMapa.append({5700.0f, 630.0f, false});
+        balasEnMapa.append({6800.0f, 630.0f, false});
+        // Parte 2
+        balasEnMapa.append({500.0f, 135.0f, false});
+        balasEnMapa.append({960.0f, 105.0f, false});
+        balasEnMapa.append({1440.0f, 125.0f, false});
+        balasEnMapa.append({1900.0f, 95.0f, false});
+        balasEnMapa.append({2820.0f, 115.0f, false});
+        balasEnMapa.append({3280.0f, 95.0f, false});
+        balasEnMapa.append({3740.0f, 135.0f, false});
+        balasEnMapa.append({4680.0f, 125.0f, false});
+        balasEnMapa.append({5140.0f, 85.0f, false});
+        balasEnMapa.append({5580.0f, 115.0f, false});
+        balasEnMapa.append({6040.0f, 95.0f, false});
+        balasEnMapa.append({6960.0f, 85.0f, false});
+        // Parte 3, antes de la bossfight
+        balasEnMapa.append({5140.0f, 100.0f, false});
+        balasEnMapa.append({5580.0f, 130.0f, false});
+        balasEnMapa.append({6040.0f, 110.0f, false});
+        balasEnMapa.append({6960.0f, 100.0f, false});
     } else {
-        balasEnMapa.append({1600.0f, 630.0f, false});
-        balasEnMapa.append({4200.0f, 630.0f, false});
-        balasEnMapa.append({6900.0f, 630.0f, false});
-        balasEnMapa.append({1920.0f, 405.0f, false});
-        balasEnMapa.append({4720.0f, 425.0f, false});
-        balasEnMapa.append({5300.0f, 245.0f, false});
-        balasEnMapa.append({6600.0f, 250.0f, false});
-        balasEnMapa.append({7280.0f, 445.0f, false});
+        //balas del modo dif
+        balasEnMapa.append({1500.0f, 630.0f, false});
+        balasEnMapa.append({4100.0f, 630.0f, false});
+        balasEnMapa.append({6800.0f, 630.0f, false});
+        balasEnMapa.append({1900.0f, 95.0f, false});
+        balasEnMapa.append({4680.0f, 125.0f, false});
+        balasEnMapa.append({5140.0f, 85.0f, false});
+        balasEnMapa.append({6040.0f, 95.0f, false});
+        balasEnMapa.append({6960.0f, 85.0f, false});
     }
 
     enemigos.clear();
     if(dificultadJuego==0){
-    short vidaFacil=50;        //para el modo fácil dejemos solo los de melee y los del esmad
+        short vidaFacil=50;//para el modo fácil dejemos solo los de melee y los del esmad
         enemigos.append(new enemigo(600.0f, 660.0f, true, TipoEnemigoArma::conservador, vidaFacil));
-        enemigos.append(new enemigo(1500.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
-        enemigos.append(new enemigo(2600.0f, 660.0f, true, TipoEnemigoArma::conservador, vidaFacil));
-        enemigos.append(new enemigo(4000.0f, 660.0f, true, TipoEnemigoArma::liberal, vidaFacil));
-        enemigos.append(new enemigo(5600.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
-        enemigos.append(new enemigo(6700.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
-        enemigos.append(new enemigo(1120.0f, 360.0f, true, TipoEnemigoArma::conservador, vidaFacil));
-        enemigos.append(new enemigo(2100.0f, 330.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
-        enemigos.append(new enemigo(3920.0f, 390.0f, true, TipoEnemigoArma::liberal, vidaFacil));
-        enemigos.append(new enemigo(6380.0f, 430.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
+        enemigos.append(new enemigo(1400.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
+        enemigos.append(new enemigo(2500.0f, 660.0f, true, TipoEnemigoArma::conservador, vidaFacil));
+        enemigos.append(new enemigo(3900.0f, 660.0f, true, TipoEnemigoArma::liberal, vidaFacil));
+        enemigos.append(new enemigo(5500.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
+        enemigos.append(new enemigo(6600.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
+        enemigos.append(new enemigo(960.0f, 170.0f, true, TipoEnemigoArma::conservador, vidaFacil));
+        enemigos.append(new enemigo(2140.0f, 320.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
+        enemigos.append(new enemigo(3740.0f, 200.0f, true, TipoEnemigoArma::liberal, vidaFacil));
+        enemigos.append(new enemigo(6280.0f, 390.0f, true, TipoEnemigoArma::esmadpistolon, vidaFacil));
     } else {
         short vidaDificilLvl1crook=140;
         short vidaDificilMafiaBoss=250;
-    //Todos los enemigos del piso
-    enemigos.append(new enemigo(600.0f, 660.0f, true, TipoEnemigoArma::liberal, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(1500.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(2600.0f, 660.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(4000.0f, 660.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(5600.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(6700.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    //Primeros enemigos del lvl en plataformitas
-    enemigos.append(new enemigo(700.0f, 340.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(1120.0f, 360.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(1700.0f, 280.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(2100.0f, 330.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
-    //Segundos enemigos del lvl
-    enemigos.append(new enemigo(2720.0f, 260.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(3120.0f, 300.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(3920.0f, 390.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(4500.0f, 320.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(4900.0f, 350.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
-    //Ultimos enemigos antes de la boss fight :p
-    enemigos.append(new enemigo(5300.0f, 290.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
-    enemigos.append(new enemigo(5920.0f, 480.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(6380.0f, 430.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(6830.0f, 410.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
-    enemigos.append(new enemigo(7050.0f, 320.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
+        //Todos los enemigos del piso
+        enemigos.append(new enemigo(600.0f, 660.0f, true, TipoEnemigoArma::liberal, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(1400.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(3900.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(5500.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(6600.0f, 660.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        //Primeros enemigos del lvl en plataformitas
+        enemigos.append(new enemigo(500.0f, 200.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
+        enemigos.append(new enemigo(960.0f, 170.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
+        enemigos.append(new enemigo(1440.0f, 190.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
+        enemigos.append(new enemigo(1900.0f, 160.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
+        //Segundos enemigos del lvl
+        enemigos.append(new enemigo(2820.0f, 180.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
+        enemigos.append(new enemigo(3280.0f, 160.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
+        enemigos.append(new enemigo(3980.0f, 350.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(4220.0f, 170.0f, true, TipoEnemigoArma::lanzallamas, vidaDificilMafiaBoss));
+        enemigos.append(new enemigo(4920.0f, 310.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
+        //Ultimos enemigos antes de la boss fight :p
+        enemigos.append(new enemigo(5360.0f, 360.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
+        enemigos.append(new enemigo(5820.0f, 340.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(6280.0f, 390.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(6740.0f, 320.0f, true, TipoEnemigoArma::esmadpistolon, vidaDificilLvl1crook));
+        enemigos.append(new enemigo(7200.0f, 370.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
     }
 }
 
@@ -213,12 +226,15 @@ void MainWindow::actualizarJuego(){
 
         bool cayendo = (jugador->GETVy() >= 0.0f);
 
-        bool tocandoArriba = (hitboxjugador.bottom() >= yPlataforma - 5.0f && hitboxjugador.bottom() <= yPlataforma + 8.0f);
+        float pieAnterior = hitboxjugador.bottom() - jugador->GETVy() * 0.016f;
+        float pieActual = hitboxjugador.bottom();
+
+        bool cruzoBordeArriba = (pieAnterior <= yPlataforma + 5.0f && pieActual >= yPlataforma - 8.0f);
         float margenBorde = 20.0f;
         bool colisionX = (hitboxjugador.right() - margenBorde > hitboxplataforma.left() && hitboxjugador.left() + margenBorde < hitboxplataforma.right());
 
-        if (colisionX && cayendo && tocandoArriba) {
-            jugador->setY(yPlataforma-22.0f);
+        if (colisionX && cayendo && cruzoBordeArriba) {
+            jugador->setY(yPlataforma - 22.0f);
             jugador->setVy(0.0f);
             jugador->setEnAire(false);
             enAlgunaPlataforma = true;
@@ -272,7 +288,7 @@ void MainWindow::actualizarJuego(){
                 int munActual = jugador->GETMunicion();
                 int munMax = jugador->GETMaxMunicion();
                 if (munActual < munMax) {
-                    jugador->setMunicion(munActual + 1);
+                    jugador->setMunicion(munActual + 3);
                     balasEnMapa[i].recolectada = true;
                 }
             }
@@ -292,7 +308,7 @@ void MainWindow::actualizarJuego(){
     } else if (jugador->GETX() > 5000.0f && jugador->GETX() <= 7500.0f) {
         limiteDerechoSectorActual = 7500.0f;
     } else if (jugador->GETX() > 7500.0f) {
-        limiteDerechoSectorActual = 10000.0f;
+        limiteDerechoSectorActual = 7800.0f;
     }
 
     enemigosEnSectorActual = 0;
@@ -342,6 +358,7 @@ void MainWindow::actualizarJuego(){
     }
 
     for (enemigo* enemigo : enemigos) {
+        enemigo->mover(0.016f);
         enemigo->actualizar(jugador->GETX(), jugador->GETY());
         bool enemigoEnPantalla = (enemigo->GETX() >= camaraX - 150 && enemigo->GETX() <= camaraX + width() + 150);
 
@@ -385,12 +402,12 @@ void MainWindow::actualizarJuego(){
             }
             else if (tipo == TipoEnemigoArma::lanzagranadas) {
                 float dirX = jugador->GETX() - origenX;
-                float velocidadBalaX = dirX * 0.9f;
-                float velocidadBalaY = -450.0f;
+                float velocidadBalaX = dirX * 0.8f;
+                float velocidadBalaY = -390.0f;
                 if (velocidadBalaX > 450.0f) velocidadBalaX = 450.0f;
                 if (velocidadBalaX < -450.0f) velocidadBalaX = -450.0f;
-                if (std::abs(velocidadBalaX) < 180.0f) {
-                    velocidadBalaX = (dirX > 0) ? 180.0f : -180.0f;
+                if (std::abs(velocidadBalaX) < 150.0f) {
+                    velocidadBalaX = (dirX > 0) ? 150.0f : -150.0f;
                 }
 
                 proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Parabolico));
@@ -442,6 +459,29 @@ void MainWindow::actualizarJuego(){
                 }
             }
 
+            if (proyectiles[i]->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico && (tocaSuelo || tocaPlataforma || colisionConJugador)) {
+                float radioExplosion = 60.0f;
+                float centroGranadaX = proyectiles[i]->GETX();
+                float centroGranadaY = proyectiles[i]->GETY();
+
+
+                if (centroGranadaY > 580.0f) {
+                    centroGranadaY = 660.0f;
+                }
+                QRectF areaExplosion(centroGranadaX - radioExplosion, centroGranadaY - radioExplosion, radioExplosion * 2.0f, radioExplosion * 2.0f);
+
+                if (areaExplosion.intersects(jugador->GETHitbox())) {
+                    jugador->recibirDanoJugador(33);
+                }
+
+                explosionesActivas.append({centroGranadaX, centroGranadaY, 0, 0.0f});
+
+                delete proyectiles[i];
+                proyectiles.removeAt(i);
+                proyectilEliminado = true;
+                break;
+            }
+
             if (tocaSuelo || tocaPlataforma) {
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
@@ -475,6 +515,17 @@ void MainWindow::actualizarJuego(){
         if (proyectiles[i]->GETY() >= 700.0f || proyectiles[i]->GETX() < camaraX - 300 || proyectiles[i]->GETX() > camaraX + width() + 300) {
             delete proyectiles[i];
             proyectiles.removeAt(i);
+        }
+    }
+    for (int e = explosionesActivas.size() - 1; e >= 0; --e) {
+        explosionesActivas[e].tiempoFrame += 0.016f;
+        if (explosionesActivas[e].tiempoFrame >= 0.08f) {
+            explosionesActivas[e].tiempoFrame = 0.0f;
+            explosionesActivas[e].frameActual++;
+
+            if (explosionesActivas[e].frameActual >= 4) {
+                explosionesActivas.removeAt(e);
+            }
         }
     }
 }
@@ -872,6 +923,26 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
         painter.drawPixmap(platPantallaX, platPantallaY + offsetVisualY,static_cast<int>(hbplat.width()), alturaVisualSprite,spriteToldo);
     }
+    if (!spriteExplosion.isNull()) {
+        int totalFramesExplosion = 4;
+        int anchoTotal = spriteExplosion.width();
+        int anchoFrame = anchoTotal / totalFramesExplosion;
+        int altoFrame = spriteExplosion.height();
+
+        for (const auto& exp : explosionesActivas) {
+            int expPantallaX = static_cast<int>(exp.x - camaraX);
+            float escalaExplosion = 1.0f;
+            int anchoDibujo = qRound(anchoFrame * escalaExplosion);
+            int altoDibujo = qRound(altoFrame * escalaExplosion);
+            int expPantallaXPos = expPantallaX - (anchoDibujo / 2);
+            int expPantallaYPos = static_cast<int>(exp.y) - (altoDibujo/2)-18;
+
+            QRect rectRecorte(exp.frameActual * anchoFrame, 0, anchoFrame, altoFrame);
+            QPixmap frameExplosion = spriteExplosion.copy(rectRecorte);
+            painter.drawPixmap(expPantallaXPos, expPantallaYPos, anchoDibujo, altoDibujo, frameExplosion);
+        }
+    }
+
     static float tiempoFlotePintar = 0.0f;
     tiempoFlotePintar += 0.1f;
 

@@ -13,7 +13,7 @@ private:
     QElapsedTimer temporizadorDisparo;
     float rangoVision;
     bool TieneArma;
-
+    float tiempoPatrulla;
     bool MostrarAlerta;
     QElapsedTimer temporizadoralerta;
     TipoEnemigoArma TipoEnemigo ;

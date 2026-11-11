@@ -19,6 +19,11 @@ struct BalaSuelo {
     float yBase;
     bool recolectada;
 };
+struct ExplosionVisual {
+    float x, y;
+    int frameActual;
+    float tiempoFrame;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -51,6 +56,8 @@ private:
     QList<Proyectil*>proyectiles;
     QList<plataformas*> Plataforma;
     QList<BalaSuelo> balasEnMapa;
+    QPixmap spriteExplosion;
+    QList<ExplosionVisual> explosionesActivas;
     float limiteIzquierdoCamara = 0.0f;
     float limiteDerechoCamara = 1400.0f;
     bool sectorLimpio = false;
