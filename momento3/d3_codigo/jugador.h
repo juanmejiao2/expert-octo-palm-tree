@@ -54,6 +54,9 @@ public:
     void reiniciarJugador(float posX, float posY);
     bool GETAnimacionDano() const;
     void recibirDanoJugador(short cantidadDano);
+    bool apuntandoArriba;
+    void setApuntandoArriba(bool arriba);
+    bool GETApuntandoArriba() const;
 };
 
 #endif // JUGADOR_H

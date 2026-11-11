@@ -35,13 +35,12 @@ void enemigo::mover(float dt){
         vx = 0.0f;
         return;
     }
-    
-    if (estadoActual == EstadoEnemigo::alerta || estadoActual == EstadoEnemigo::disparando) {
-        vx = (TipoEnemigo == TipoEnemigoArma::conservador || TipoEnemigo == TipoEnemigoArma::liberal) ? 35.0f : 0.0f;
-    } else {
+
+    if (estadoActual != EstadoEnemigo::alerta && estadoActual != EstadoEnemigo::disparando) {
         tiempoPatrulla += dt;
         vx = std::sin(tiempoPatrulla * 2.0f) * 20.0f;
     }
+
     x += vx * dt;
 }
 
@@ -69,6 +68,13 @@ void enemigo::actualizar(float xjugador, float yjugador){
     }else{
         estadoActual=EstadoEnemigo::idle;
         MostrarAlerta=false;
+    }
+    if (estadoActual == EstadoEnemigo::alerta || estadoActual == EstadoEnemigo::disparando) {
+        if (TipoEnemigo == TipoEnemigoArma::conservador || TipoEnemigo == TipoEnemigoArma::liberal || TipoEnemigo == TipoEnemigoArma::esmadpistolon) {
+            vx = (distanciaX > 0) ? 35.0f : -35.0f;
+        }else {
+            vx = 0.0f;
+        }
     }
 }
 

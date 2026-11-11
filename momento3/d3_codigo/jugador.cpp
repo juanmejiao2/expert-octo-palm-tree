@@ -4,14 +4,27 @@
 static float direccionDeseada = 0.0f;
 
 jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicionY, 100) {
+    frameActual = 0;
+    tiempoAnimacion = 0.0f;
+    enMovimiento = false;
+    contadorFrames = 0;
+    contadorFramesDisparo = 0;
+    frameDisparo = 0;
     municion = 6;
     maxMunicion = 6;
     pesoBase = 5.0f;
     enAire = false;
+    mirandoDerecha = true;
     armaJugador = new arma(1, 25, 800.0f, 10);
+    disparandoAnimacion = false;
+    contadorAnimacionDisparo = 0;
+    animacionpuno = false;
+    frameGolpes = 0;
+    contadorFramesGolpes = 0;
     cooldownDisparo = 0.0f;
     animacionDano = false;
     contadorDano = 0;
+    apuntandoArriba = false;
 }
 
 jugador::~jugador() {
@@ -34,11 +47,16 @@ Proyectil* jugador::disparar() {
         disparandoAnimacion = true;
         contadorAnimacionDisparo = 10;
         cooldownDisparo = 0.25f;
-        float velocidadBalaX = mirandoDerecha ? 800.0f : -800.0f;
-        float alturaPechoY = y - 70.0f;
-        float offsetX = mirandoDerecha ? 35.0f : -15.0f;
-        return new Proyectil(x + offsetX, alturaPechoY, velocidadBalaX, 0.0f, true, TipoMovimientoProyectil::Rectilineo);
-    }else {
+        if (apuntandoArriba) {
+            float alturaCabezaY = y - 95.0f;
+            return new Proyectil(x + 20.0f, alturaCabezaY, 0.0f, -800.0f, true, TipoMovimientoProyectil::Rectilineo);
+        } else {
+            float velocidadBalaX = mirandoDerecha ? 800.0f : -800.0f;
+            float alturaPechoY = y - 70.0f;
+            float offsetX = mirandoDerecha ? 35.0f : -15.0f;
+            return new Proyectil(x + offsetX, alturaPechoY, velocidadBalaX, 0.0f, true, TipoMovimientoProyectil::Rectilineo);
+        }
+    } else {
         animacionpuno=true;
         frameGolpes=0;
         contadorFramesGolpes=0;
@@ -101,10 +119,15 @@ void jugador::mover(float dt) {
     }
     if (disparandoAnimacion) {
         contadorFramesDisparo++;
-        if (contadorFramesDisparo >= 4) {
+        int umbralVelocidad = apuntandoArriba ? 2 : 4;
+
+        if (contadorFramesDisparo >= umbralVelocidad) {
             frameDisparo++;
             contadorFramesDisparo = 0;
-            if (frameDisparo >= 6) {
+
+            int maxFramesDisparo = apuntandoArriba ? 11 : 6;
+
+            if (frameDisparo >= maxFramesDisparo) {
                 frameDisparo = 0;
                 disparandoAnimacion = false;
             }
@@ -213,6 +236,9 @@ void jugador::reiniciarJugador(float posX, float posY) {
     enAire = false;
     animacionpuno = false;
     disparandoAnimacion = false;
+    frameDisparo = 0;
+    contadorFramesDisparo = 0;
+    apuntandoArriba = false;
 }
 void jugador::recibirDanoJugador(short cantidadDano) {
     vida -= cantidadDano;
@@ -231,4 +257,10 @@ void jugador::setMaxMunicion(short maxM) {
 }
 int jugador::GETMaxMunicion() const {
     return maxMunicion;
+}
+void jugador::setApuntandoArriba(bool arriba) {
+    apuntandoArriba = arriba;
+}
+bool jugador::GETApuntandoArriba() const {
+    return apuntandoArriba;
 }

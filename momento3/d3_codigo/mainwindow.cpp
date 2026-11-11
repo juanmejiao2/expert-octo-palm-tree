@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     camaraX = 0.0f;
     enSeleccionDificultad = true;
     dificultadJuego = 0;
+    contadorFramesGO = 0;
 
     this->setFixedSize(1280,720);
 
@@ -247,16 +248,22 @@ void MainWindow::actualizarJuego(){
 
     if (jugador->GETAnimacionGolpes()) {
         int frameActualGolpe = jugador->GETFrameGolpes();
+        static bool yaPegoEstePunio = false;
 
-        if (frameActualGolpe >= 1 && frameActualGolpe <= 3) {
+        if (frameActualGolpe == 0) {
+            yaPegoEstePunio = false;
+        }
+
+        if (frameActualGolpe >= 1 && frameActualGolpe <= 3 && !yaPegoEstePunio) {
+            yaPegoEstePunio = true;
+
             float anchoGolpe = 50.0f;
             float altoGolpe = 30.0f;
             float posXGolpe = 0.0f;
             float posYTorso = jugador->GETY() - 70.0f;
-            QRectF hbJugador = jugador->GETHitbox();
 
             if (jugador->GETmirandoDerecha()) {
-                posXGolpe = jugador->GETX() +85.0f;
+                posXGolpe = jugador->GETX() + 85.0f;
             } else {
                 posXGolpe = jugador->GETX() - 20.0f;
             }
@@ -266,14 +273,14 @@ void MainWindow::actualizarJuego(){
             for (enemigo* en : enemigos) {
                 if (en->GETEstado() != EstadoEnemigo::destruido) {
                     if (hitboxGolpe.intersects(en->GETHitbox())) {
-                        en->recibirdano(10.0f);
-                        if (en->GETVida() <= 0) {
-                        }
+                        en->recibirdano(25.0f);
+                        break;
                     }
                 }
             }
         }
     }
+
     static float tiempoFlote = 0.0f;
     tiempoFlote += 0.1f;
 
@@ -566,6 +573,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         moviendoIzquierda=true;
         jugador->setVelocidadX(-300.0f);
     }
+    else if (event->key() == Qt::Key_W || event->key() == Qt::Key_Up) {
+        jugador->setApuntandoArriba(true);
+    }
     else if (event->key() == Qt::Key_J || event->key()==Qt::Key_Z) {
         Proyectil* nuevoProyectil = jugador->disparar();
         if (nuevoProyectil != nullptr) {
@@ -593,6 +603,9 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event) {
         } else {
             jugador->setVelocidadX(0.0f);
         }
+    }
+    else if (event->key() == Qt::Key_W || event->key() == Qt::Key_Up) {
+        jugador->setApuntandoArriba(false);
     }
 }
 
@@ -694,15 +707,14 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         totalFramesFila = 5;
         indiceFrame = jugador->GETFrameGolpes() % totalFramesFila;
 
-
         static const int coordenadasX[5] = {2, 180, 380, 587, 773};
         static const int anchos[5]  = {77, 106, 89, 81, 76};
 
         spriteX = coordenadasX[indiceFrame];
         spriteAncho = anchos[indiceFrame];
+        usarcoordenadasmanuales=true;
 
-
-    } else {
+    }else {
         if (jugador->GETEnElAire()) {
             if (jugador->GETDisparandoAnim()) {
                 spriteY=1779;
@@ -726,6 +738,23 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 }
                 indiceFrame=frameSaltoActual;
             }
+        }
+
+        else if (jugador->GETApuntandoArriba() && jugador->GETDisparandoAnim()) {
+            spriteY = 2641;
+            spriteAlto = 156;
+            totalFramesFila = 11;
+
+            int frameDispArribaIdx = jugador->GETFrameDisparo() % totalFramesFila;
+
+            float anchoTiraArriba = 826.0f;
+            int offsetInicioArriba = 4;
+
+            spriteX = offsetInicioArriba + qRound(frameDispArribaIdx * (anchoTiraArriba / totalFramesFila));
+            int siguienteXArriba = offsetInicioArriba + qRound((frameDispArribaIdx + 1) * (anchoTiraArriba / totalFramesFila));
+            spriteAncho = (siguienteXArriba - spriteX);
+            usarcoordenadasmanuales = true;
+
         } else if (jugador->GETDisparandoAnim()) {
             spriteY=1779;
             spriteAlto = 97;
@@ -959,7 +988,6 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     }
 
     if (sectorLimpio) {
-        static int contadorFramesGO = 0;
         contadorFramesGO++;
         if (contadorFramesGO < 180) {
             if ((contadorFramesGO / 20) % 2 == 0) {
@@ -972,7 +1000,6 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             }
         }
     } else {
-        static int contadorFramesGO = 0;
         contadorFramesGO = 0;
     }
 

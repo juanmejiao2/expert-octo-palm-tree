@@ -67,5 +67,6 @@ private:
     void reiniciarNivel();
     bool enSeleccionDificultad;
     int dificultadJuego;
+    int contadorFramesGO;
 };
 #endif // MAINWINDOW_H
