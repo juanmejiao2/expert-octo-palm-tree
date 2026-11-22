@@ -21,6 +21,7 @@ public:
     void setVy(float nuevaVy);
     float GETVy() const;
     short GETVida() const;
+    void setVida(short nuevaVida);
 };
 
 #endif // ENTIDAD_H

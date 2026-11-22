@@ -45,6 +45,8 @@ Proyectil* jugador::disparar() {
     if (municion > 0) {
         municion--;
         disparandoAnimacion = true;
+        frameDisparo = 0;
+        contadorFramesDisparo = 0;
         contadorAnimacionDisparo = 10;
         cooldownDisparo = 0.25f;
         if (apuntandoArriba) {

@@ -11,6 +11,7 @@ class enemigo:public entidad{
 private:
     EstadoEnemigo estadoActual;
     QElapsedTimer temporizadorDisparo;
+    QElapsedTimer temporizadorRafagaLlamas;
     float rangoVision;
     bool TieneArma;
     float tiempoPatrulla;
@@ -31,6 +32,7 @@ public:
     TipoEnemigoArma GETTipoEnemigo() const;
     bool MostrarLaAlerta() const;
     QRectF GETHitbox() const override;
+    bool estaLanzandoLlama() const;
 };
 
 #endif // ENEMIGOS_H

@@ -31,17 +31,25 @@ enemigo::~enemigo(){
 void enemigo::mover(float dt){
     if (estadoActual == EstadoEnemigo::destruido) return;
 
-    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) {
+    if (TipoEnemigo == TipoEnemigoArma::lanzagranadas|| TipoEnemigo == TipoEnemigoArma::lanzallamas) {
         vx = 0.0f;
         return;
     }
 
-    if (estadoActual != EstadoEnemigo::alerta && estadoActual != EstadoEnemigo::disparando) {
+    if (estadoActual == EstadoEnemigo::idle) {
         tiempoPatrulla += dt;
         vx = std::sin(tiempoPatrulla * 2.0f) * 20.0f;
     }
+    float nuevaX = x + vx * dt;
 
-    x += vx * dt;
+    if (nuevaX < 20.0f) {
+        nuevaX = 20.0f;
+        vx = 0.0f;
+    }
+
+    x = nuevaX;
+
+
 }
 
 
@@ -51,8 +59,9 @@ void enemigo::actualizar(float xjugador, float yjugador){
 
     float distanciaX= xjugador-x;
     float distanciaAbsX= std::abs(distanciaX);
+    float distanciaAbsY = std::abs(yjugador - y);
 
-    if (distanciaAbsX <= rangoVision){
+    if (distanciaAbsX <= rangoVision && distanciaAbsY <= 140.0f){
         if (estadoActual==EstadoEnemigo::idle){
             estadoActual=EstadoEnemigo::alerta;
             MostrarAlerta=true;
@@ -63,16 +72,24 @@ void enemigo::actualizar(float xjugador, float yjugador){
                 estadoActual= EstadoEnemigo::disparando;
                 MostrarAlerta=false;
                 temporizadorDisparo.restart();
+                temporizadorRafagaLlamas.restart();
             }
         }
     }else{
         estadoActual=EstadoEnemigo::idle;
         MostrarAlerta=false;
+        vx = 0.0f;
+        temporizadorRafagaLlamas.restart();
     }
     if (estadoActual == EstadoEnemigo::alerta || estadoActual == EstadoEnemigo::disparando) {
         if (TipoEnemigo == TipoEnemigoArma::conservador || TipoEnemigo == TipoEnemigoArma::liberal || TipoEnemigo == TipoEnemigoArma::esmadpistolon) {
-            vx = (distanciaX > 0) ? 35.0f : -35.0f;
-        }else {
+            bool estaEnPlataforma = (y < 650.0f);
+            if (distanciaAbsX > 25.0f && !estaEnPlataforma) {
+                vx = (distanciaX > 0) ? 35.0f : -35.0f;
+            } else {
+                vx = 0.0f;
+            }
+        } else {
             vx = 0.0f;
         }
     }
@@ -84,7 +101,10 @@ bool enemigo::puededisparar(){
     int intervaloDisparo = 2000;
     TipoEnemigoArma tipo = GETTipoEnemigo();
 
-    if (tipo == TipoEnemigoArma::lanzallamas) intervaloDisparo = 1000;
+    if (tipo == TipoEnemigoArma::lanzallamas) {
+        if (!estaLanzandoLlama()) return false;
+        intervaloDisparo = 260;
+    }
     else if (tipo == TipoEnemigoArma::esmadpistolon) intervaloDisparo = 1500;
     else if (tipo == TipoEnemigoArma::lanzagranadas) intervaloDisparo = 2500;
 
@@ -120,4 +140,11 @@ QRectF enemigo::GETHitbox() const {
 }
 TipoEnemigoArma enemigo::GETTipoEnemigo() const {
     return TipoEnemigo;
+}
+bool enemigo::estaLanzandoLlama() const {
+    if (TipoEnemigo != TipoEnemigoArma::lanzallamas || estadoActual != EstadoEnemigo::disparando) {
+        return false;
+    }
+    qint64 ciclo = temporizadorRafagaLlamas.elapsed() % 2250;
+    return ciclo < 750;
 }

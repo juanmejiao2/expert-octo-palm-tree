@@ -44,3 +44,7 @@ float entidad::GETVy() const {
 short entidad::GETVida() const {
     return vida;
 }
+void entidad::setVida(short nuevaVida) {
+    vida = nuevaVida;
+    if (vida < 0) vida = 0;
+}
