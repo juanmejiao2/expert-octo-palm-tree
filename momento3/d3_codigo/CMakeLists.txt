@@ -28,14 +28,13 @@ set(PROJECT_SOURCES
         arma.cpp
         plataformas.h
         plataformas.cpp
-        recursos.rc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(D3_codigo
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        enemigos.cpp enemigos.h entidad.cpp entidad.h jugador.cpp jugador.h mainwindow.cpp mainwindow.h plataformas.cpp plataformas.h proyectil.cpp proyectil.h main.cpp mainwindow.ui arma.cpp arma.h
+        enemigos.cpp enemigos.h   jugador.cpp jugador.h mainwindow.cpp mainwindow.h plataformas.cpp plataformas.h proyectil.cpp proyectil.h main.cpp mainwindow.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET D3_codigo APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
