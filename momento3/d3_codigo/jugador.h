@@ -68,6 +68,7 @@ public:
     void setVy(float nuevaVy);
     short GETVida() const;
     short GETDanoBala() const;
+    void setVida(short nuevaVida);
 };
 
 #endif // JUGADOR_H

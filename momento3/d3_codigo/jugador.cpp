@@ -50,6 +50,8 @@ Proyectil* jugador::disparar() {
     if (municion > 0) {
         municion--;
         disparandoAnimacion = true;
+        frameDisparo = 0;
+        contadorFramesDisparo = 0;
         contadorAnimacionDisparo = 10;
         cooldownDisparo = 0.25f;
         if (apuntandoArriba) {
@@ -292,4 +294,8 @@ short jugador::GETVida() const {
 }
 short jugador::GETDanoBala() const {
     return danoBala;
+}
+void jugador::setVida(short nuevaVida) {
+    vida = nuevaVida;
+    if (vida < 0) vida = 0;
 }

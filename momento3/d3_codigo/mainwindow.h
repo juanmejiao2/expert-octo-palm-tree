@@ -19,6 +19,12 @@ struct BalaSuelo {
     float yBase;
     bool recolectada;
 };
+struct CuraSuelo{
+    float x;
+    float ybase;
+    bool recolectada;
+};
+
 struct ExplosionVisual {
     float x, y;
     int frameActual;
@@ -47,11 +53,18 @@ private:
     bool moviendoDerecha;
     bool moviendoIzquierda;
     float camaraX;
+    QPixmap fondoLvl1Escalado;
     QPixmap spriteGameOver;
     QPixmap spriteSheetPunisher;
     QPixmap spriteToldo;
     QPixmap spriteBalaRecoger;
     QPixmap spritePantallaInicio;
+    QPixmap spriteCura;
+    QPixmap spriteConservador;
+    QPixmap spriteLiberal;
+    QPixmap spriteLanzallamas;
+    QPixmap spriteFuego;
+    QList<CuraSuelo> curasEnMapa;
     QList<enemigo*> enemigos;
     QList<Proyectil*>proyectiles;
     QList<plataformas*> Plataforma;

@@ -15,6 +15,7 @@ protected:
 private:
     EstadoEnemigo estadoActual;
     QElapsedTimer temporizadorDisparo;
+    QElapsedTimer temporizadorRafagaLlamas;
     float rangoVision;
     bool TieneArma;
     float tiempoPatrulla;
@@ -39,6 +40,7 @@ public:
     float GETY() const;
     void setX(float nuevaX);
     short GETVida() const;
+    bool estaLanzandoLlama() const;
 };
 
 #endif // ENEMIGOS_H

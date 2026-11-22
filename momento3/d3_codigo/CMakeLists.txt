@@ -17,15 +17,12 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
-        entidad.h
         jugador.cpp
         jugador.h
         enemigos.cpp
         enemigos.h
         proyectil.h
         proyectil.cpp
-        arma.h
-        arma.cpp
         plataformas.h
         plataformas.cpp
 )
