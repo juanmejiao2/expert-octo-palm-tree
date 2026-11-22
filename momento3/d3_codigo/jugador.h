@@ -1,10 +1,9 @@
 #ifndef JUGADOR_H
 #define JUGADOR_H
-#include "entidad.h"
-#include "arma.h"
+#include <QRectF>
 #include "proyectil.h"
 
-class jugador: public entidad{
+class jugador{
 
 private:
     int frameActual;
@@ -18,7 +17,8 @@ private:
     float pesoBase;
     bool enAire;
     bool mirandoDerecha;
-    arma *armaJugador;
+    short danoBala;
+    float velocidadBala;
     bool disparandoAnimacion;
     int contadorAnimacionDisparo;
     bool animacionpuno;
@@ -27,6 +27,9 @@ private:
     float cooldownDisparo;
     bool animacionDano;
     int contadorDano;
+    float x, y;            // posición
+    float vx, vy;          // velocidad
+    short vida;            // antes en entidad
 
 public:
     jugador(float posicionX, float posicionY);
@@ -34,7 +37,7 @@ public:
     void setVelocidadX(float nuevaVx);
     void saltar();
     Proyectil* disparar();
-    void mover(float dt) override;
+    void mover(float dt);
     bool GETEnElAire() const;
     bool GETmirandoDerecha() const;
     int GETFrameActual() const;
@@ -46,7 +49,7 @@ public:
     bool GETAnimacionGolpes() const;
     int GETFrameGolpes() const;
     bool GETEnMovimiento() const;
-    QRectF GETHitbox() const override;
+    QRectF GETHitbox() const;
     void setEnAire(bool aire);
     void setMunicion(short m);
     void setMaxMunicion(short maxM);
@@ -57,6 +60,15 @@ public:
     bool apuntandoArriba;
     void setApuntandoArriba(bool arriba);
     bool GETApuntandoArriba() const;
+    float GETX() const;
+    float GETY() const;
+    float GETVy() const;
+    void setX(float nuevaX);
+    void setY(float nuevaY);
+    void setVy(float nuevaVy);
+    short GETVida() const;
+    short GETDanoBala() const;
+    void setVida(short nuevaVida);
 };
 
 #endif // JUGADOR_H

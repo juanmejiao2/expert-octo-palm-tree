@@ -1,7 +1,12 @@
 #include "enemigos.h"
 #include <cmath>
 
-enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, short vidaInicial) : entidad(_x, _y, vidaInicial) {
+enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, short vidaInicial) {
+    x = _x;
+    y = _y;
+    vx = 0;
+    vy = 0;
+    vida = vidaInicial;
     estadoActual=EstadoEnemigo::idle;
     TipoEnemigo = _tipo;
     tiempoPatrulla = _x * 0.01f;
@@ -119,8 +124,9 @@ void enemigo::disparar() {
 }
 
 void enemigo::recibirdano(int dano) {
-    recibirDanio(static_cast<short>(dano));
-    if (vida <= 0) {
+    vida -= static_cast<short>(dano);
+    if (vida < 0)
+        vida = 0; {
         estadoActual = EstadoEnemigo::destruido;
     }
 }
@@ -140,6 +146,18 @@ QRectF enemigo::GETHitbox() const {
 }
 TipoEnemigoArma enemigo::GETTipoEnemigo() const {
     return TipoEnemigo;
+}
+float enemigo::GETX() const {
+    return x;
+}
+float enemigo::GETY() const {
+    return y;
+}
+void enemigo::setX(float nuevaX) {
+    x = nuevaX;
+}
+short enemigo::GETVida() const {
+    return vida;
 }
 bool enemigo::estaLanzandoLlama() const {
     if (TipoEnemigo != TipoEnemigoArma::lanzallamas || estadoActual != EstadoEnemigo::disparando) {

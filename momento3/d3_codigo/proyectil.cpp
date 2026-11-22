@@ -1,8 +1,9 @@
 #include "proyectil.h"
 #include <cmath>
 
-Proyectil::Proyectil(float x, float y, float vx, float vy, bool esDelJugador, TipoMovimientoProyectil tipo)
-    : entidad(x, y, 1) {
+Proyectil::Proyectil(float x, float y, float vx, float vy, bool esDelJugador, TipoMovimientoProyectil tipo) {
+    this->x = x;
+    this->y = y;
     velocidadX = vx;
     velocidadY = vy;
     deJugador = esDelJugador;
@@ -50,4 +51,10 @@ QRectF Proyectil::GETHitbox() const {
 }
 TipoMovimientoProyectil Proyectil::GETTipoMovimiento() const{
     return tipoMovimiento;
+}
+float Proyectil::GETX() const {
+    return x;
+}
+float Proyectil::GETY() const {
+    return y;
 }

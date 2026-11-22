@@ -3,7 +3,12 @@
 
 static float direccionDeseada = 0.0f;
 
-jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicionY, 100) {
+jugador::jugador(float posicionX, float posicionY) {
+    x = posicionX;
+    y = posicionY;
+    vx = 0;
+    vy = 0;
+    vida = 100;
     frameActual = 0;
     tiempoAnimacion = 0.0f;
     enMovimiento = false;
@@ -15,7 +20,8 @@ jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicion
     pesoBase = 5.0f;
     enAire = false;
     mirandoDerecha = true;
-    armaJugador = new arma(1, 25, 800.0f, 10);
+    danoBala = 25;
+    velocidadBala = 800.0f;
     disparandoAnimacion = false;
     contadorAnimacionDisparo = 0;
     animacionpuno = false;
@@ -28,7 +34,6 @@ jugador::jugador(float posicionX, float posicionY) : entidad(posicionX, posicion
 }
 
 jugador::~jugador() {
-    delete armaJugador;
 }
 
 void jugador::saltar() {
@@ -51,9 +56,9 @@ Proyectil* jugador::disparar() {
         cooldownDisparo = 0.25f;
         if (apuntandoArriba) {
             float alturaCabezaY = y - 95.0f;
-            return new Proyectil(x + 20.0f, alturaCabezaY, 0.0f, -800.0f, true, TipoMovimientoProyectil::Rectilineo);
+               return new Proyectil(x + 20.0f, alturaCabezaY, 0.0f, -velocidadBala, true, TipoMovimientoProyectil::Rectilineo);
         } else {
-            float velocidadBalaX = mirandoDerecha ? 800.0f : -800.0f;
+            float velocidadBalaX = mirandoDerecha ? velocidadBala : -velocidadBala;
             float alturaPechoY = y - 70.0f;
             float offsetX = mirandoDerecha ? 35.0f : -15.0f;
             return new Proyectil(x + offsetX, alturaPechoY, velocidadBalaX, 0.0f, true, TipoMovimientoProyectil::Rectilineo);
@@ -265,4 +270,32 @@ void jugador::setApuntandoArriba(bool arriba) {
 }
 bool jugador::GETApuntandoArriba() const {
     return apuntandoArriba;
+}
+float jugador::GETX() const {
+    return x;
+}
+float jugador::GETY() const {
+    return y;
+}
+float jugador::GETVy() const {
+    return vy;
+}
+void jugador::setX(float nuevaX) {
+    x = nuevaX;
+}
+void jugador::setY(float nuevaY) {
+    y = nuevaY;
+}
+void jugador::setVy(float nuevaVy) {
+    vy = nuevaVy;
+}
+short jugador::GETVida() const {
+    return vida;
+}
+short jugador::GETDanoBala() const {
+    return danoBala;
+}
+void jugador::setVida(short nuevaVida) {
+    vida = nuevaVida;
+    if (vida < 0) vida = 0;
 }
