@@ -17,7 +17,7 @@ enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, sho
     } else if (TipoEnemigo == TipoEnemigoArma::esmadpistolon ) {
         rangoVision = 300.0f;
     }else if(TipoEnemigo == TipoEnemigoArma::lanzagranadas){
-        rangoVision= 310.0f;
+        rangoVision= 500.0f;
     }
     else {
         rangoVision = 300.0f;
@@ -43,9 +43,10 @@ void enemigo::mover(float dt){
     }
 
     if (estadoActual == EstadoEnemigo::idle) {
-        tiempoPatrulla += dt;
-        vx = std::sin(tiempoPatrulla * 2.0f) * 20.0f;
+        vx = 0.0f;
+        return;
     }
+
     float nuevaX = x + vx * dt;
 
     if (nuevaX < 20.0f) {
@@ -54,7 +55,6 @@ void enemigo::mover(float dt){
     }
 
     x = nuevaX;
-
 
 }
 
@@ -90,8 +90,9 @@ void enemigo::actualizar(float xjugador, float yjugador){
     if (estadoActual == EstadoEnemigo::alerta || estadoActual == EstadoEnemigo::disparando) {
         if (TipoEnemigo == TipoEnemigoArma::conservador || TipoEnemigo == TipoEnemigoArma::liberal || TipoEnemigo == TipoEnemigoArma::esmadpistolon) {
             bool estaEnPlataforma = (y < 650.0f);
-            if (distanciaAbsX > 25.0f && !estaEnPlataforma) {
-                vx = (distanciaX > 0) ? 35.0f : -35.0f;
+            float margenSeparacion = 58.0f;
+            if (distanciaAbsX > margenSeparacion && !estaEnPlataforma) {
+                vx = (distanciaX > 0) ? 45.0f : -45.0f;
             } else {
                 vx = 0.0f;
             }
@@ -104,15 +105,19 @@ void enemigo::actualizar(float xjugador, float yjugador){
 bool enemigo::puededisparar(){
     if (estadoActual !=EstadoEnemigo::disparando|| !TieneArma) return false;
 
-    int intervaloDisparo = 2000;
+    int intervaloDisparo = 2300;
     TipoEnemigoArma tipo = GETTipoEnemigo();
 
     if (tipo == TipoEnemigoArma::lanzallamas) {
         if (!estaLanzandoLlama()) return false;
         intervaloDisparo = 260;
+
+    } else if (tipo == TipoEnemigoArma::esmadpistolon) {
+    intervaloDisparo = 2000;
+
+    } else if (tipo == TipoEnemigoArma::lanzagranadas) {
+    intervaloDisparo = 2500;
     }
-    else if (tipo == TipoEnemigoArma::esmadpistolon) intervaloDisparo = 1500;
-    else if (tipo == TipoEnemigoArma::lanzagranadas) intervaloDisparo = 2500;
 
     if (temporizadorDisparo.elapsed() > intervaloDisparo){
         temporizadorDisparo.restart();

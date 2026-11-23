@@ -44,6 +44,7 @@ public:
     bool estaLanzandoLlama() const;
     long long tiempoDesdeDisparo() const;
     void setRangoVisionY(float nuevoRango);
+
 };
 
 #endif // ENEMIGOS_H

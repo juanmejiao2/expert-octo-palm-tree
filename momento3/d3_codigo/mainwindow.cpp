@@ -75,9 +75,9 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     spriteCura.load("HEAL.png");
     spriteConservador.load("Conservadores_sprites.png");
     spriteLiberal.load("Liberales_sprites.png");
-    spritePistolero.load("esmad_pistola.png");
-    spriteGranadero.load("esmad_granadero.png");
-    spriteCarro.load("carro_en_llamas.png");
+    spritePistolero.load("esmad_pistolon.png");
+    spriteGranadero.load("lanzagranada.png");
+    spriteCarro.load("carro_lanzagranadas.png");
     spriteGranada.load("granada.png");
     QPixmap fuego("fuego.png");
     if (!fuego.isNull()) {
@@ -567,12 +567,17 @@ if (nivelActual == 1) {
             TipoEnemigoArma tipo = enemigo->GETTipoEnemigo();
 
             if (tipo == TipoEnemigoArma::conservador || tipo == TipoEnemigoArma::liberal) {
-                float distanciaX = std::abs(jugador->GETX() - origenX);
+                float deltaX = jugador->GETX() - origenX;
+                bool jugadorAdelante = (jugador->GETX() < origenX) ? (deltaX < 0.0f) : (deltaX > 0.0f);
+                float distanciaX = std::abs(deltaX);
                 float distanciaY = std::abs(jugador->GETY() - enemigo->GETY());
-                if (distanciaX < 90.0f && distanciaY < 60.0f) {
+
+                if (jugadorAdelante && distanciaX < 120.0f && distanciaY < 65.0f && enemigo->tiempoDesdeDisparo() < 350) {
                     jugador->recibirDanoJugador(10);
                 }
             }
+
+
                 else if (tipo == TipoEnemigoArma::esmadpistolon) {
                 float dirX = jugador->GETX() - origenX;
                 float dirY = jugador->GETY() - origenY;
@@ -1154,14 +1159,15 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
                 if (xFrame + wFrame <= hoja.width() && yFrame + hFrame <= hoja.height()) {
                     QPixmap recorte = hoja.copy(xFrame, yFrame, wFrame, hFrame);
-                    int altoDibujo = 104;
+                    float escalaEnemigo = 1.25f;
+                    int altoDibujo = qRound(104 * escalaEnemigo);
                     int anchoDibujo = qRound((static_cast<float>(wFrame) / hFrame) * altoDibujo);
                     QPixmap escalado = recorte.scaled(anchoDibujo, altoDibujo, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
                     int centroDibujo = qRound(centroFrame * (static_cast<float>(escalado.height()) / hFrame));
                     if (!mirarIzquierda) centroDibujo = escalado.width() - centroDibujo;
-                    int drawX = xPantalla - centroDibujo + 20;
-                    int drawY = static_cast<int>(en->GETY()) - escalado.height() + 4;
+                    int drawX = xPantalla - centroDibujo + qRound(20 * escalaEnemigo);
+                    int drawY = static_cast<int>(en->GETY()) - escalado.height() + 28;
 
                     painter.save();
                     if (!mirarIzquierda) {
@@ -1180,7 +1186,6 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 bool estaDisparando = (estado == EstadoEnemigo::disparando);
                 bool mostrandoFuego = estaDisparando && en->estaLanzandoLlama();
 
-                // medidas reales de cada cuadro (fila 0 = quieto, fila 1 = disparando)
                 static const int xsFila0[4] = {26, 181, 335, 485};
                 static const int wsFila0[4] = {153, 153, 149, 131};
                 static const int centrosFila0[4] = {57, 57, 58, 59};
@@ -1215,12 +1220,13 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
                 QPixmap recorteSoldado = spriteLanzallamas.copy(xRec, yRec, wRec, hRec);
 
-                int altoSoldado = 104;
+                float escalaLanzallamas = 1.25f;
+                int altoSoldado = qRound(104 * escalaLanzallamas);
                 QPixmap pixSoldado = recorteSoldado.scaledToHeight(altoSoldado, Qt::SmoothTransformation);
                 int centroSoldado = qRound(centroRec * (static_cast<float>(pixSoldado.height()) / hRec));
                 if (mirarIzquierda) centroSoldado = pixSoldado.width() - centroSoldado;
-                int cuerpoX = xPantalla + 22 - centroSoldado;
-                int cuerpoY = static_cast<int>(en->GETY()) - pixSoldado.height() + 4;
+                int cuerpoX = xPantalla + qRound(22 * escalaLanzallamas) - centroSoldado;
+                int cuerpoY = static_cast<int>(en->GETY()) - pixSoldado.height() + 14;
 
                 painter.save();
                 if (mirarIzquierda) {
@@ -1231,6 +1237,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     painter.drawPixmap(cuerpoX, cuerpoY, pixSoldado);
                 }
                 painter.restore();
+
                 if (mostrandoFuego && !spriteFuego.isNull()) {
                     static const float inicioFuego[4] = {0.017f, 0.180f, 0.393f, 0.647f};
                     static const float finFuego[4]    = {0.141f, 0.353f, 0.607f, 0.950f};
@@ -1245,19 +1252,19 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     int wLlama = qMax(1, xFinLlama - xLlama);
 
                     QPixmap recorteLlama = spriteFuego.copy(xLlama, 0, wLlama, altoTotalFuego);
-                    int altoLlama = 68;
+                    int altoLlama = qRound(68 * escalaLanzallamas);
                     QPixmap llamaEscalada = recorteLlama.scaledToHeight(altoLlama, Qt::SmoothTransformation);
 
-                    int bocaY = cuerpoY + qRound(pixSoldado.height() * 0.56f) - (llamaEscalada.height() / 2);
+                    int bocaY = cuerpoY + qRound(pixSoldado.height() * 0.56f) - (llamaEscalada.height() / 2)+7;
 
                     painter.save();
                     if (mirarIzquierda) {
-                        int bocaX = cuerpoX + 6;
+                        int bocaX = cuerpoX + qRound(6 * escalaLanzallamas);
                         painter.translate(bocaX, bocaY);
                         painter.scale(-1, 1);
                         painter.drawPixmap(0, 0, llamaEscalada);
                     } else {
-                        int bocaX = cuerpoX + pixSoldado.width() - 6;
+                        int bocaX = cuerpoX + pixSoldado.width() - qRound(6 * escalaLanzallamas);
                         painter.drawPixmap(bocaX, bocaY, llamaEscalada);
                     }
                     painter.restore();
@@ -1268,23 +1275,35 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             } else if (tipo == TipoEnemigoArma::liberal) {
                 painter.fillRect(xPantalla, yPantalla, 40, 100, Qt::red);
             } else if (tipo == TipoEnemigoArma::esmadpistolon && !spritePistolero.isNull()) {
+                const int colsTotal = 6;
+                const int filasTotal = 3;
+                int wCelda = spritePistolero.width() / colsTotal;
+                int hCelda = spritePistolero.height() / filasTotal;
+
                 int fila = 0;
-                int col = (relojAnim / 8) % 6;
+                int col = 0;
+
                 if (estado == EstadoEnemigo::disparando) {
                     fila = 1;
-                    long long t = en->tiempoDesdeDisparo();
-                    if (t < 90) col = 1;
-                    else if (t < 180) col = 2;
-                    else col = 0;
+                    col = (relojAnim / 7) % colsTotal;
+                } else if (estado == EstadoEnemigo::alerta) {
+                    fila = 0;
+                    col = (relojAnim / 8) % colsTotal;
+                } else {
+                    fila = 0;
+                    col = ((relojAnim / 45) % 2 == 0) ? 0 : 2;
                 }
-                QPixmap cuadroPistolero = spritePistolero.copy(col * 144, fila * 128, 144, 128);
-                int piesX = xPantalla + 20;
-                int dibX = mirarIzquierda ? piesX - (144 - 61) : piesX - 61;
-                int dibY = static_cast<int>(en->GETY()) + 4 - 124;
+
+                QPixmap cuadroPistolero = spritePistolero.copy(col * wCelda, fila * hCelda, wCelda, hCelda).scaledToHeight(124, Qt::SmoothTransformation);
+                int wDib = cuadroPistolero.width();
+                int hDib = cuadroPistolero.height();
+
+                int dibX = xPantalla - (wDib / 2);
+                int dibY = static_cast<int>(en->GETY()) - hDib + 16;
 
                 painter.save();
                 if (mirarIzquierda) {
-                    painter.translate(dibX + 144, dibY);
+                    painter.translate(dibX + wDib, dibY);
                     painter.scale(-1, 1);
                     painter.drawPixmap(0, 0, cuadroPistolero);
                 } else {
@@ -1293,28 +1312,43 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 painter.restore();
 
             } else if (tipo == TipoEnemigoArma::lanzagranadas && !spriteGranadero.isNull()) {
+                const int colsTotal = 8;
+                const int filasTotal = 3;
+                int wCelda = spriteGranadero.width() / colsTotal;
+                int hCelda = spriteGranadero.height() / filasTotal;
+
                 int fila = 0;
                 int col = (relojAnim / 14) % 4;
-                if (estado == EstadoEnemigo::disparando) {
+
+                if (estado == EstadoEnemigo::alerta) {
+                    fila = 1;
+                    col = (relojAnim / 12) % 3;
+                } else if (estado == EstadoEnemigo::disparando) {
+                    fila = 1;
                     long long t = en->tiempoDesdeDisparo();
-                    if (t >= 2100) { fila = 1; col = static_cast<int>((t - 2100) / 100); }
-                    else if (t < 400) { fila = 1; col = 4 + static_cast<int>(t / 100); }
-                    if (col > 7) col = 7;
+                    if (t < 250) col = 3;
+                    else if (t < 500) col = 4;
+                    else if (t < 750) col = 5;
+                    else col = 6;
                 }
-                QPixmap cuadroGranadero = spriteGranadero.copy(col * 144, fila * 128, 144, 128);
-                int piesX = xPantalla + 45;
-                int dibX = mirarIzquierda ? piesX - (144 - 58) : piesX - 58;
-                int dibY = static_cast<int>(en->GETY()) + 4 - 124;
+
+                QPixmap cuadroGranadero = spriteGranadero.copy(col * wCelda, fila * hCelda, wCelda, hCelda).scaledToHeight(118, Qt::SmoothTransformation);
+                int wDib = cuadroGranadero.width();
+                int hDib = cuadroGranadero.height();
+
+                int dibX = xPantalla - (wDib / 2);
+                int dibY = static_cast<int>(en->GETY()) - hDib + 14;
 
                 painter.save();
                 if (mirarIzquierda) {
-                    painter.translate(dibX + 144, dibY);
+                    painter.translate(dibX + wDib, dibY);
                     painter.scale(-1, 1);
                     painter.drawPixmap(0, 0, cuadroGranadero);
                 } else {
                     painter.drawPixmap(dibX, dibY, cuadroGranadero);
                 }
                 painter.restore();
+
             } else if (tipo == TipoEnemigoArma::esmadpistolon) {
                 painter.fillRect(xPantalla, yPantalla, 40, 100, QColor(70, 130, 180));
             } else if (tipo == TipoEnemigoArma::lanzallamas) {
@@ -1335,12 +1369,6 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             }
         }
 
-        if (en->GETTipoEnemigo() == TipoEnemigoArma::lanzagranadas && !spriteCarro.isNull()) {
-            int piesX = static_cast<int>(en->GETX() - camaraX) + 45;
-            int colCarro = (relojAnim / 6) % 6;
-            QPixmap cuadroCarro = spriteCarro.copy(colCarro * 176, 0, 176, 128);
-            painter.drawPixmap(piesX - 82, static_cast<int>(en->GETY()) + 4 - 124, cuadroCarro);
-        }
     }
         painter.restore();
 
