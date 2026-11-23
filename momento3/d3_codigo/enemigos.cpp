@@ -125,8 +125,8 @@ void enemigo::disparar() {
 
 void enemigo::recibirdano(int dano) {
     vida -= static_cast<short>(dano);
-    if (vida < 0)
-        vida = 0; {
+    if (vida < 0) vida = 0;
+    if (vida <= 0) {
         estadoActual = EstadoEnemigo::destruido;
     }
 }
@@ -163,6 +163,9 @@ bool enemigo::estaLanzandoLlama() const {
     if (TipoEnemigo != TipoEnemigoArma::lanzallamas || estadoActual != EstadoEnemigo::disparando) {
         return false;
     }
-    qint64 ciclo = temporizadorRafagaLlamas.elapsed() % 2250;
+    long long ciclo = temporizadorRafagaLlamas.elapsed() % 2250;
     return ciclo < 750;
+}
+    long long enemigo::tiempoDesdeDisparo() const {
+    return temporizadorDisparo.elapsed();
 }
