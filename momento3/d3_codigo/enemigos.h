@@ -42,6 +42,8 @@ public:
     short GETVida() const;
     bool estaLanzandoLlama() const;
     long long tiempoDesdeDisparo() const;
+    int frameAnimActual(int relojAnim) const;
+    bool estaEnFrameDeImpacto(int relojAnim) const;
 };
 
 #endif // ENEMIGOS_H
