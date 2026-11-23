@@ -935,33 +935,40 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 int yFrame = 6;
                 int wFrame = 72;
                 int hFrame = 104;
+                int centroFrame = 36;
 
                 if (estado == EstadoEnemigo::idle) {
-                    int xsIdle[4] = {4, 80, 156, 232};
-                    int wsIdle[4] = {72, 72, 72, 76};
+                    int xsIdle[4] = {2, 77, 132, 194};
+                    int wsIdle[4] = {46, 51, 60, 60};
+                    int centrosIdle[4] = {22, 27, 35, 38};
                     int idx = (relojAnim / 16) % 4;
                     xFrame = xsIdle[idx];
                     wFrame = wsIdle[idx];
-                    yFrame = 6;
+                    centroFrame = centrosIdle[idx];
+                    yFrame = 24;
                     hFrame = 104;
 
                 } else if (estado == EstadoEnemigo::alerta) {
-                    int xsAlerta[2] = {312, 392};
-                    int wsAlerta[2] = {74, 76};
+                    int xsAlerta[2] = {258, 365};
+                    int wsAlerta[2] = {74, 64};
+                    int centrosAlerta[2] = {40, 39};
                     int idx = (relojAnim / 10) % 2;
                     xFrame = xsAlerta[idx];
                     wFrame = wsAlerta[idx];
-                    yFrame = 6;
+                    centroFrame = centrosAlerta[idx];
+                    yFrame = 24;
                     hFrame = 104;
 
                 } else if (estado == EstadoEnemigo::disparando) {
-                    int xsAtaque[3] = {4, 84, 172};
-                    int wsAtaque[3] = {76, 84, 112};
+                    int xsAtaque[3] = {10, 96, 162};
+                    int wsAtaque[3] = {69, 64, 94};
+                    int centrosAtaque[3] = {43, 35, 61};
                     int idx = (relojAnim / 9) % 3;
                     xFrame = xsAtaque[idx];
                     wFrame = wsAtaque[idx];
-                    yFrame = 116;
-                    hFrame = 106;
+                    centroFrame = centrosAtaque[idx];
+                    yFrame = 152;
+                    hFrame = 104;
                 }
 
                 if (xFrame + wFrame <= hoja.width() && yFrame + hFrame <= hoja.height()) {
@@ -970,11 +977,13 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     int anchoDibujo = qRound((static_cast<float>(wFrame) / hFrame) * altoDibujo);
                     QPixmap escalado = recorte.scaled(anchoDibujo, altoDibujo, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-                    int drawX = xPantalla - (escalado.width() / 2) + 20;
+                    int centroDibujo = qRound(centroFrame * (static_cast<float>(escalado.height()) / hFrame));
+                    if (!mirarIzquierda) centroDibujo = escalado.width() - centroDibujo;
+                    int drawX = xPantalla - centroDibujo + 20;
                     int drawY = static_cast<int>(en->GETY()) - escalado.height() + 4;
 
                     painter.save();
-                    if (mirarIzquierda) {
+                    if (!mirarIzquierda) {
                         painter.translate(drawX + escalado.width(), drawY);
                         painter.scale(-1, 1);
                         painter.drawPixmap(0, 0, escalado);
@@ -990,10 +999,14 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 bool estaDisparando = (estado == EstadoEnemigo::disparando);
                 bool mostrandoFuego = estaDisparando && en->estaLanzandoLlama();
 
-                int colsTotales = 11;
-                int filasTotales = 3;
-                float pasoX = static_cast<float>(spriteLanzallamas.width()) / colsTotales;
-                float pasoY = static_cast<float>(spriteLanzallamas.height()) / filasTotales;
+                // medidas reales de cada cuadro (fila 0 = quieto, fila 1 = disparando)
+                static const int xsFila0[4] = {26, 181, 335, 485};
+                static const int wsFila0[4] = {153, 153, 149, 131};
+                static const int centrosFila0[4] = {57, 57, 58, 59};
+                static const int xsFila1[7] = {21, 182, 356, 535, 709, 871, 1042};
+                static const int wsFila1[7] = {155, 159, 158, 156, 157, 149, 157};
+                static const int centrosFila1[7] = {58, 60, 60, 60, 60, 60, 60};
+                static const int piesFila1[7] = {411, 408, 407, 405, 400, 400, 399};
 
                 int fila = estaDisparando ? 1 : 0;
                 int col = 0;
@@ -1008,11 +1021,11 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     col = (relojAnim / velIdle) % cuadrosIdle;
                 }
 
-                int margenX = 8;
-                int xRec = qRound(col * pasoX) + margenX;
-                int yRec = qRound(fila * pasoY) + 2;
-                int wRec = qRound(pasoX) - (margenX * 2);
-                int hRec = qRound(pasoY) - 4;
+                int hRec = 188;
+                int xRec = (fila == 1) ? xsFila1[col] : xsFila0[col];
+                int wRec = (fila == 1) ? wsFila1[col] : wsFila0[col];
+                int yRec = ((fila == 1) ? piesFila1[col] : 206) - hRec;
+                int centroRec = (fila == 1) ? centrosFila1[col] : centrosFila0[col];
 
                 if (xRec < 0) xRec = 0;
                 if (yRec < 0) yRec = 0;
@@ -1023,7 +1036,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
                 int altoSoldado = 104;
                 QPixmap pixSoldado = recorteSoldado.scaledToHeight(altoSoldado, Qt::SmoothTransformation);
-                int cuerpoX = xPantalla + 22 - (pixSoldado.width() / 2);
+                int centroSoldado = qRound(centroRec * (static_cast<float>(pixSoldado.height()) / hRec));
+                if (mirarIzquierda) centroSoldado = pixSoldado.width() - centroSoldado;
+                int cuerpoX = xPantalla + 22 - centroSoldado;
                 int cuerpoY = static_cast<int>(en->GETY()) - pixSoldado.height() + 4;
 
                 painter.save();
@@ -1036,8 +1051,8 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 }
                 painter.restore();
                 if (mostrandoFuego && !spriteFuego.isNull()) {
-                    static const float inicioFuego[4] = {0.00f, 0.16f, 0.38f, 0.64f};
-                    static const float finFuego[4]    = {0.16f, 0.38f, 0.64f, 1.00f};
+                    static const float inicioFuego[4] = {0.017f, 0.180f, 0.393f, 0.647f};
+                    static const float finFuego[4]    = {0.141f, 0.353f, 0.607f, 0.950f};
 
                     int velFuego = 8;
                     int idxLlama = (relojAnim / velFuego) % 4;
