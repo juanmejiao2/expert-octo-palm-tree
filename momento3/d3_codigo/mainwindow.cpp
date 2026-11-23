@@ -26,6 +26,10 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     spriteCura.load("HEAL.png");
     spriteConservador.load("Conservadores_sprites.png");
     spriteLiberal.load("Liberales_sprites.png");
+    spritePistolero.load("esmad_pistola.png");
+    spriteGranadero.load("esmad_granadero.png");
+    spriteCarro.load("carro_en_llamas.png");
+    spriteGranada.load("granada.png");
     QPixmap fuego("fuego.png");
     if (!fuego.isNull()) {
         spriteFuego = fuego;
@@ -451,7 +455,9 @@ void MainWindow::actualizarJuego(){
                     velocidadBalaX = (dirX > 0) ? 150.0f : -150.0f;
                 }
 
-                proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Parabolico));
+                float manoX = enemigo->GETX() + 45.0f + ((dirX > 0) ? 34.0f : -34.0f);
+                float manoY = enemigo->GETY() - 100.0f;
+                proyectiles.append(new Proyectil(manoX, manoY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Parabolico));
             }
         }
     }
@@ -1086,6 +1092,54 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 painter.fillRect(xPantalla, yPantalla, 40, 100, Qt::blue);
             } else if (tipo == TipoEnemigoArma::liberal) {
                 painter.fillRect(xPantalla, yPantalla, 40, 100, Qt::red);
+            } else if (tipo == TipoEnemigoArma::esmadpistolon && !spritePistolero.isNull()) {
+                int fila = 0;
+                int col = (relojAnim / 8) % 6;
+                if (estado == EstadoEnemigo::disparando) {
+                    fila = 1;
+                    long long t = en->tiempoDesdeDisparo();
+                    if (t < 90) col = 1;
+                    else if (t < 180) col = 2;
+                    else col = 0;
+                }
+                QPixmap cuadroPistolero = spritePistolero.copy(col * 144, fila * 128, 144, 128);
+                int piesX = xPantalla + 20;
+                int dibX = mirarIzquierda ? piesX - (144 - 61) : piesX - 61;
+                int dibY = static_cast<int>(en->GETY()) + 4 - 124;
+
+                painter.save();
+                if (mirarIzquierda) {
+                    painter.translate(dibX + 144, dibY);
+                    painter.scale(-1, 1);
+                    painter.drawPixmap(0, 0, cuadroPistolero);
+                } else {
+                    painter.drawPixmap(dibX, dibY, cuadroPistolero);
+                }
+                painter.restore();
+
+            } else if (tipo == TipoEnemigoArma::lanzagranadas && !spriteGranadero.isNull()) {
+                int fila = 0;
+                int col = (relojAnim / 14) % 4;
+                if (estado == EstadoEnemigo::disparando) {
+                    long long t = en->tiempoDesdeDisparo();
+                    if (t >= 2100) { fila = 1; col = static_cast<int>((t - 2100) / 100); }
+                    else if (t < 400) { fila = 1; col = 4 + static_cast<int>(t / 100); }
+                    if (col > 7) col = 7;
+                }
+                QPixmap cuadroGranadero = spriteGranadero.copy(col * 144, fila * 128, 144, 128);
+                int piesX = xPantalla + 45;
+                int dibX = mirarIzquierda ? piesX - (144 - 58) : piesX - 58;
+                int dibY = static_cast<int>(en->GETY()) + 4 - 124;
+
+                painter.save();
+                if (mirarIzquierda) {
+                    painter.translate(dibX + 144, dibY);
+                    painter.scale(-1, 1);
+                    painter.drawPixmap(0, 0, cuadroGranadero);
+                } else {
+                    painter.drawPixmap(dibX, dibY, cuadroGranadero);
+                }
+                painter.restore();
             } else if (tipo == TipoEnemigoArma::esmadpistolon) {
                 painter.fillRect(xPantalla, yPantalla, 40, 100, QColor(70, 130, 180));
             } else if (tipo == TipoEnemigoArma::lanzallamas) {
@@ -1104,6 +1158,13 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 int alturaAlertaY = yPantalla - 30;
                 painter.drawText(centroEnemigoX - 10, alturaAlertaY, "!");
             }
+        }
+
+        if (en->GETTipoEnemigo() == TipoEnemigoArma::lanzagranadas && !spriteCarro.isNull()) {
+            int piesX = static_cast<int>(en->GETX() - camaraX) + 45;
+            int colCarro = (relojAnim / 6) % 6;
+            QPixmap cuadroCarro = spriteCarro.copy(colCarro * 176, 0, 176, 128);
+            painter.drawPixmap(piesX - 82, static_cast<int>(en->GETY()) + 4 - 124, cuadroCarro);
         }
     }
 
@@ -1129,6 +1190,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             painter.setBrush(Qt::yellow);
             painter.setPen(QPen(QColor(255, 140, 0), 2));
             painter.drawEllipse(projPantallaX, projPantallaY, 10, 5);
+        } else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico && !spriteGranada.isNull()) {
+            int giro = (relojAnim / 4) % 4;                     // la granada da vueltas en el aire
+            painter.drawPixmap(projPantallaX - 8, projPantallaY - 8, spriteGranada.copy(giro * 16, 0, 16, 16));
         } else {
             painter.setBrush(Qt::yellow);
             painter.setPen(QPen(QColor(255, 140, 0), 2));

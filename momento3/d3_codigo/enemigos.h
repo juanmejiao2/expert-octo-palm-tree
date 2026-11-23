@@ -41,6 +41,7 @@ public:
     void setX(float nuevaX);
     short GETVida() const;
     bool estaLanzandoLlama() const;
+    long long tiempoDesdeDisparo() const;
 };
 
 #endif // ENEMIGOS_H

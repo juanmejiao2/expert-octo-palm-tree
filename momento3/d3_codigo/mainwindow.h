@@ -64,6 +64,10 @@ private:
     QPixmap spriteLiberal;
     QPixmap spriteLanzallamas;
     QPixmap spriteFuego;
+    QPixmap spritePistolero;
+    QPixmap spriteGranadero;
+    QPixmap spriteCarro;
+    QPixmap spriteGranada;
     QList<CuraSuelo> curasEnMapa;
     QList<enemigo*> enemigos;
     QList<Proyectil*>proyectiles;
