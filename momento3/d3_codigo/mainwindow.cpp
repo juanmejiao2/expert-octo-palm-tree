@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     enSeleccionDificultad = true;
     dificultadJuego = 0;
     contadorFramesGO = 0;
+    nivelActual = 1;
 
     this->setFixedSize(1280,720);
 
@@ -66,7 +67,7 @@ void MainWindow::reiniciarNivel() {
     camaraX = 0.0f;
     juegoTerminado = false;
     sectorLimpio = false;
-
+    nivelActual = 1;
     jugador = new ::jugador(100.0f, 660.0f);
     if (dificultadJuego == 0) {
         jugador->setMaxMunicion(12);
@@ -221,6 +222,37 @@ void MainWindow::reiniciarNivel() {
         enemigos.append(new enemigo(7200.0f, 370.0f, true, TipoEnemigoArma::lanzagranadas, vidaDificilMafiaBoss));
     }
 }
+// Cambio de escena: borra lo del nivel 1 y arma el nivel 2 en el mismo MainWindow.
+// Punisher conserva su vida y su munición; solo se ubica al inicio.
+void MainWindow::cargarNivel2() {
+    nivelActual = 2;
+
+    qDeleteAll(proyectiles);
+    proyectiles.clear();
+    qDeleteAll(Plataforma);
+    Plataforma.clear();
+    qDeleteAll(enemigos);
+    enemigos.clear();
+    balasEnMapa.clear();
+    curasEnMapa.clear();
+    explosionesActivas.clear();
+
+    camaraX = 0.0f;
+    sectorLimpio = false;
+    juegoTerminado = false;
+
+    jugador->setX(100.0f);
+    jugador->setY(660.0f);
+    jugador->setVy(0.0f);
+    jugador->setVelocidadX(0.0f);
+    jugador->setSueloY(660.0f);   // por ahora hay piso;
+
+    // Nubes de prueba
+    //                                   x       y     ancho  alto  amplitud omega  fase
+    Plataforma.append(new plataformas(300.0f, 540.0f, 160.0f, 24.0f, 50.0f, 1.2f, 0.0f));
+    Plataforma.append(new plataformas(600.0f, 430.0f, 160.0f, 24.0f, 70.0f, 0.9f, 1.5f));
+    Plataforma.append(new plataformas(900.0f, 320.0f, 160.0f, 24.0f, 40.0f, 1.6f, 3.0f));
+}
 
 MainWindow::~MainWindow() {
     delete jugador;
@@ -353,7 +385,7 @@ void MainWindow::actualizarJuego(){
             }
         }
     }
-
+if (nivelActual == 1) {
     float posEnPantallaX = jugador->GETX() - camaraX;
     if (posEnPantallaX > 640.0f) {
         camaraX = jugador->GETX() - 640.0f;
@@ -380,6 +412,14 @@ void MainWindow::actualizarJuego(){
     }
     sectorLimpio = (enemigosEnSectorActual == 0);
 
+    // Fin del nivel 1: último sector limpio -> cambio de escena al nivel 2
+    // (cuando esté el camión del ESMAD, será un enemigo más de este sector)
+    if (sectorLimpio && jugador->GETX() > 7500.0f) {
+        cargarNivel2();
+        update();
+        return;
+    }
+
     float camaraMaxPermitida = limiteDerechoSectorActual - width();
     if (camaraMaxPermitida < 0.0f) camaraMaxPermitida = 0.0f;
 
@@ -389,6 +429,10 @@ void MainWindow::actualizarJuego(){
             jugador->setX(camaraX + width() - 80.0f);
         }
     }
+}
+else {
+    camaraX = 0.0f;           // nivel 2: la pantalla no se desplaza de lado
+}
 
     if (camaraX < 0.0f) {
         camaraX = 0.0f;
@@ -601,10 +645,24 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     }
     if (juegoTerminado) {
         if (event->key() == Qt::Key_R || event->key() == Qt::Key_Return) {
-            reiniciarNivel();
+            if (nivelActual == 2) {          // si murió en el nivel 2, reinicia el nivel 2
+                jugador->setVida(100);
+                jugador->setMunicion(jugador->GETMaxMunicion());
+                cargarNivel2();
+            } else {
+                reiniciarNivel();
+            }
         }
         return;
     }
+
+    // ================== TEMPORAL - BORRAR ANTES DE ENTREGAR ==================
+    // F2 salta directo al nivel 2 para probarlo sin jugar todo el nivel 1.
+    if (event->key() == Qt::Key_F2) {
+        cargarNivel2();
+        return;
+    }
+    // ================ FIN TEMPORAL - BORRAR ANTES DE ENTREGAR ================
 
     if(event->key() == Qt::Key_Space){
         jugador->saltar();
@@ -706,7 +764,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     }
 
 
-    if (!fondoLvl1Escalado.isNull() && fondoLvl1Escalado.width() > 0) {
+    if (nivelActual == 2) {
+        painter.fillRect(0, 0, width(), height(), QColor(120, 170, 225));
+    } else if (!fondoLvl1Escalado.isNull() && fondoLvl1Escalado.width() > 0) {
         int anchoFondo = fondoLvl1Escalado.width();
         float anchoMaximoNivel = anchoFondo * 5.0f;
 
@@ -1218,7 +1278,16 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         int offsetVisualY = -5;
         int alturaVisualSprite = 60;
 
-        painter.drawPixmap(platPantallaX, platPantallaY + offsetVisualY,static_cast<int>(hbplat.width()), alturaVisualSprite,spriteToldo);
+        if (nivelActual == 2) {          // nube provisional
+            int w = static_cast<int>(hbplat.width());
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QColor(245, 247, 252));
+            painter.drawEllipse(platPantallaX, platPantallaY - 6, w, 30);
+            painter.drawEllipse(platPantallaX + w / 5, platPantallaY - 22, w / 2, 34);
+            painter.drawEllipse(platPantallaX + w / 2, platPantallaY - 16, w / 3, 28);
+        } else {
+            painter.drawPixmap(platPantallaX, platPantallaY + offsetVisualY,static_cast<int>(hbplat.width()), alturaVisualSprite,spriteToldo);
+        }
     }
     if (!spriteExplosion.isNull()) {
         int totalFramesExplosion = 4;

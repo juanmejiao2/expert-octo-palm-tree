@@ -9,6 +9,7 @@ jugador::jugador(float posicionX, float posicionY) {
     vx = 0;
     vy = 0;
     vida = 100;
+    sueloY = 660.0f;
     frameActual = 0;
     tiempoAnimacion = 0.0f;
     enMovimiento = false;
@@ -118,7 +119,6 @@ void jugador::mover(float dt) {
         x = 0.0f;
     }
 
-    float sueloY = 660.0f;
     if (y >= sueloY) {
         y = sueloY;
         vy = 0.0f;
@@ -298,4 +298,7 @@ short jugador::GETDanoBala() const {
 void jugador::setVida(short nuevaVida) {
     vida = nuevaVida;
     if (vida < 0) vida = 0;
+}
+void jugador::setSueloY(float nuevoSuelo) {
+    sueloY = nuevoSuelo;
 }

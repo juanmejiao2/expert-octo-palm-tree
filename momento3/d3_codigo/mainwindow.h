@@ -82,6 +82,8 @@ private:
     QPixmap pixmapGo;
     bool juegoTerminado;
     void reiniciarNivel();
+    void cargarNivel2();
+    int nivelActual;          // 1 o 2: qué escena se está jugando
     bool enSeleccionDificultad;
     int dificultadJuego;
     int contadorFramesGO;

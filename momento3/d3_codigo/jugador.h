@@ -29,7 +29,8 @@ private:
     int contadorDano;
     float x, y;            // posición
     float vx, vy;          // velocidad
-    short vida;            // antes en entidad
+    short vida;
+    float sueloY;          // altura del piso (cambia según el nivel)
 
 public:
     jugador(float posicionX, float posicionY);
@@ -69,6 +70,7 @@ public:
     short GETVida() const;
     short GETDanoBala() const;
     void setVida(short nuevaVida);
+    void setSueloY(float nuevoSuelo);
 };
 
 #endif // JUGADOR_H
