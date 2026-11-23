@@ -8,6 +8,7 @@
 #include "enemigos.h"
 #include "proyectil.h"
 #include "plataformas.h"
+#include "jefegaitan.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -86,7 +87,11 @@ private:
     bool juegoTerminado;
     void reiniciarNivel();
     void cargarNivel2();
-    int nivelActual;          // 1 o 2: qué escena se está jugando
+    int nivelActual;
+    JefeGaitan *jefe;
+    bool peleaActiva;
+    bool victoria;
+    void borrarJefe();
     bool enSeleccionDificultad;
     int dificultadJuego;
     int contadorFramesGO;

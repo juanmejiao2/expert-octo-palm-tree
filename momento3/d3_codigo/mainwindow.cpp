@@ -61,6 +61,9 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     dificultadJuego = 0;
     contadorFramesGO = 0;
     nivelActual = 1;
+    jefe = nullptr;
+    peleaActiva = false;
+    victoria = false;
 
     this->setFixedSize(1280,720);
 
@@ -112,6 +115,7 @@ void MainWindow::reiniciarNivel() {
     enemigosEnNube.clear();
     qDeleteAll(enemigos);
     enemigos.clear();
+    borrarJefe();
 
     camaraX = 0.0f;
     camaraY = 0.0f;
@@ -287,6 +291,7 @@ void MainWindow::cargarNivel2() {
     balasEnMapa.clear();
     curasEnMapa.clear();
     explosionesActivas.clear();
+    borrarJefe();
 
     camaraX = 0.0f;
     camaraY = 0.0f;
@@ -341,7 +346,16 @@ void MainWindow::cargarNivel2() {
     }
 }
 
+void MainWindow::borrarJefe() {
+    delete jefe;
+    jefe = nullptr;
+    peleaActiva = false;
+    victoria = false;
+}
+
 MainWindow::~MainWindow() {
+    delete jefe;
+    qDeleteAll(enemigos);
     delete jugador;
     qDeleteAll(proyectiles);
     proyectiles.clear();
@@ -355,7 +369,7 @@ void MainWindow::actualizarJuego(){
         update();
         return;
     }
-    if (juegoTerminado) {
+    if (juegoTerminado || victoria) {
         update();
         return;
     }
@@ -507,7 +521,6 @@ if (nivelActual == 1) {
     sectorLimpio = (enemigosEnSectorActual == 0);
 
     // Fin del nivel 1: último sector limpio -> cambio de escena al nivel 2
-    // (cuando esté el camión del ESMAD, será un enemigo más de este sector)
     if (sectorLimpio && jugador->GETX() > 7500.0f) {
         cargarNivel2();
         update();
@@ -533,7 +546,29 @@ if (nivelActual == 1) {
         camaraY = jugador->GETY() - 500.0f;          // baja si se cae
     }
     if (camaraY > 0.0f) camaraY = 0.0f;             // no mostrar debajo de la plaza
-    if (camaraY < -2880.0f) camaraY = -2880.0f;      // tope: la arena de Gaitán
+    if (camaraY < -2880.0f) camaraY = -2880.0f;
+    // ---------- pelea final contra Gaitán ----------
+    if (!peleaActiva && jugador->GETY() < -2200.0f) {
+        jefe = new JefeGaitan(dificultadJuego);
+        peleaActiva = true;
+    }
+    if (peleaActiva) {
+        camaraY = -2880.0f;
+        if (jugador->GETY() > -2100.0f) {
+            jugador->setX(600.0f);
+            jugador->setY(-2302.0f);
+            jugador->setVy(0.0f);
+            jugador->recibirDanoJugador(10);
+        }
+        jefe->actualizar(0.016f, *jugador, proyectiles);
+        int danioLaser = jefe->aplicarLaser(jugador->GETHitbox(), 0.016f);
+        if (danioLaser > 0) {
+            jugador->recibirDanoJugador(static_cast<short>(danioLaser));
+        }
+        if (jefe->consumirCambioDeFase()) {
+            explosionesActivas.append({jefe->GETX(), jefe->GETY(), 0, 0.0f});
+        }
+    }
 }
 
     if (camaraX < 0.0f) {
@@ -629,6 +664,14 @@ if (nivelActual == 1) {
         QRectF hitboxBala(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 8.0f, 4.0f);
 
         if (proyectiles[i]->GETDeJugador()) {
+            if (jefe != nullptr && jefe->GETEstado() != EstadoEnemigo::destruido && hitboxBala.intersects(jefe->GETHitbox())) {
+                if (jefe->recibirDisparo(25)) {
+                    victoria = true;
+                }
+                delete proyectiles[i];
+                proyectiles.removeAt(i);
+                continue;
+            }
             for (enemigo* enemigo : enemigos) {
                 if (enemigo->GETEstado() != EstadoEnemigo::destruido) {
                     if (hitboxBala.intersects(enemigo->GETHitbox())) {
@@ -654,6 +697,10 @@ if (nivelActual == 1) {
         }
         else {
             QRectF hitboxProyectilEnemigo(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 12.0f, 12.0f);
+            int origen = proyectiles[i]->GETAtaqueOrigen();
+            if (proyectiles[i]->GETTipoMovimiento() == TipoMovimientoProyectil::Pendulo) {
+                hitboxProyectilEnemigo = QRectF(proyectiles[i]->GETX() - 14.0f, proyectiles[i]->GETY() - 14.0f, 28.0f, 28.0f);
+            }
             bool colisionConJugador = hitboxProyectilEnemigo.intersects(jugador->GETHitbox());
             bool tocaSuelo = (proyectiles[i]->GETY() >= 660.0f);
 
@@ -676,9 +723,11 @@ if (nivelActual == 1) {
                 }
                 QRectF areaExplosion(centroGranadaX - radioExplosion, centroGranadaY - radioExplosion, radioExplosion * 2.0f, radioExplosion * 2.0f);
 
-                if (areaExplosion.intersects(jugador->GETHitbox())) {
-                    jugador->recibirDanoJugador(33);
+                bool explosionToca = areaExplosion.intersects(jugador->GETHitbox());
+                if (explosionToca) {
+                    jugador->recibirDanoJugador(origen >= 0 && jefe != nullptr ? jefe->escalarDanio(33) : 33);
                 }
+                if (origen >= 0 && jefe != nullptr) jefe->aprender(origen, explosionToca);
 
                 explosionesActivas.append({centroGranadaX, centroGranadaY, 0, 0.0f});
 
@@ -689,6 +738,7 @@ if (nivelActual == 1) {
             }
 
             if (tocaSuelo || tocaPlataforma) {
+                if (origen >= 0 && jefe != nullptr) jefe->aprender(origen, false);
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
                 proyectilEliminado = true;
@@ -706,8 +756,9 @@ if (nivelActual == 1) {
                         jugador->recibirDanoJugador(40);
                     }
                 } else {
-                    jugador->recibirDanoJugador(20);
+                    jugador->recibirDanoJugador(origen >= 0 && jefe != nullptr ? jefe->escalarDanio(20) : 20);
                 }
+                if (origen >= 0 && jefe != nullptr) jefe->aprender(origen, true);
 
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
@@ -718,7 +769,11 @@ if (nivelActual == 1) {
 
         if (proyectilEliminado) continue;
 
-        if (proyectiles[i]->GETY() >= 700.0f || proyectiles[i]->GETY() < camaraY - 300 || proyectiles[i]->GETX() < camaraX - 300 || proyectiles[i]->GETX() > camaraX + width() + 300) {
+        bool debajoDePantalla = (nivelActual == 2 && proyectiles[i]->GETY() > camaraY + height() + 100);
+        if (debajoDePantalla || proyectiles[i]->GETY() >= 700.0f || proyectiles[i]->GETY() < camaraY - 300 || proyectiles[i]->GETX() < camaraX - 300 || proyectiles[i]->GETX() > camaraX + width() + 300) {
+            if (!proyectiles[i]->GETDeJugador() && proyectiles[i]->GETAtaqueOrigen() >= 0 && jefe != nullptr) {
+                jefe->aprender(proyectiles[i]->GETAtaqueOrigen(), false);   // se fue sin tocarlo: falló
+            }
             delete proyectiles[i];
             proyectiles.removeAt(i);
         }
@@ -754,9 +809,16 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         }
         return;
     }
+    if (victoria) {
+        if (event->key() == Qt::Key_R || event->key() == Qt::Key_Return) {
+            borrarJefe();
+            enSeleccionDificultad = true;
+        }
+        return;
+    }
     if (juegoTerminado) {
         if (event->key() == Qt::Key_R || event->key() == Qt::Key_Return) {
-            if (nivelActual == 2) {          // si murió en el nivel 2, reinicia el nivel 2
+            if (nivelActual == 2) {
                 jugador->setVida(100);
                 jugador->setMunicion(jugador->GETMaxMunicion());
                 cargarNivel2();
@@ -1386,6 +1448,18 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     painter.setBrush(Qt::red);
     painter.drawRect(100, 55, static_cast<int>(200 * porcentajeSalud), 22);
 
+    if (peleaActiva && jefe != nullptr) {
+        int anchoBarra = 500;
+        int barraX = (width() - anchoBarra) / 2;
+        painter.setPen(Qt::white);
+        painter.drawText(barraX, 30, jefe->enFase2() ? "GAITÁN - FURIA" : "GAITÁN");
+        painter.setBrush(Qt::darkGray);
+        painter.drawRect(barraX, 38, anchoBarra, 16);
+        float porcentajeJefe = qMax(0.0f, static_cast<float>(jefe->GETVida()) / jefe->GETVidaMaxima());
+        painter.setBrush(jefe->enFase2() ? QColor(200, 30, 30) : QColor(220, 180, 40));
+        painter.drawRect(barraX, 38, static_cast<int>(anchoBarra * porcentajeJefe), 16);
+    }
+
     painter.save();
     painter.translate(0, -camaraY);
 
@@ -1397,7 +1471,13 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             painter.setBrush(Qt::yellow);
             painter.setPen(QPen(QColor(255, 140, 0), 2));
             painter.drawEllipse(projPantallaX, projPantallaY, 10, 5);
-        } else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico && !spriteGranada.isNull()) {
+        } else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Pendulo) {   // provisional: cuerda + bola
+        painter.setPen(QPen(QColor(230, 210, 150), 2));
+        painter.drawLine(QPointF(p->GETPivoteX() - camaraX, p->GETPivoteY()), QPointF(projPantallaX, projPantallaY));
+        painter.setPen(QPen(QColor(255, 200, 60), 3));
+        painter.setBrush(QColor(255, 120, 20));
+        painter.drawEllipse(QPointF(projPantallaX, projPantallaY), 14, 14);
+        }else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico && !spriteGranada.isNull()) {
             int giro = (relojAnim / 4) % 4;                     // la granada da vueltas en el aire
             painter.drawPixmap(projPantallaX - 8, projPantallaY - 8, spriteGranada.copy(giro * 16, 0, 16, 16));
         } else {
@@ -1487,6 +1567,31 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             }
         }
     }
+    if (jefe != nullptr && jefe->GETEstado() != EstadoEnemigo::destruido) {
+        QRectF cuerpo = jefe->GETHitbox();
+        QColor colorCuerpo = jefe->enFase2() ? QColor(200, 60, 40, 230) : QColor(230, 190, 80, 230);
+        if (jefe->GETDestello() > 0.0f) colorCuerpo = Qt::white;       // destello al teletransportarse
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(255, 220, 120, 60));
+        painter.drawEllipse(cuerpo.center(), 70, 90);
+        painter.setBrush(colorCuerpo);
+        painter.drawRect(cuerpo.adjusted(0, 30, 0, 0));
+        painter.drawEllipse(QPointF(cuerpo.center().x(), cuerpo.top() + 20), 22, 22);
+        QPointF ojos = jefe->GETOjos();
+        painter.setBrush(QColor(255, 40, 40));
+        painter.drawEllipse(QPointF(ojos.x() - 8, ojos.y()), 4, 3);
+        painter.drawEllipse(QPointF(ojos.x() + 8, ojos.y()), 4, 3);
+
+        if (jefe->GETFaseLaser() == 1) {             // aviso
+            painter.setPen(QPen(QColor(255, 60, 60, 110), 2));
+            painter.drawLine(ojos, jefe->GETFinLaser());
+        } else if (jefe->GETFaseLaser() == 2) {      // disparando
+            painter.setPen(QPen(QColor(255, 30, 30, 200), 14));
+            painter.drawLine(ojos, jefe->GETFinLaser());
+            painter.setPen(QPen(QColor(255, 240, 240), 4));
+            painter.drawLine(ojos, jefe->GETFinLaser());
+        }
+    }
     painter.restore();            // fin del mundo
 
     if (sectorLimpio) {
@@ -1543,5 +1648,20 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         QString textoContinuar = "PRESS [R] TO RESTART";
         int anchoTextoCont = QFontMetrics(fuenteContinuar).horizontalAdvance(textoContinuar);
         painter.drawText((width() - anchoTextoCont) / 2, 520, textoContinuar);
+    }
+    if (victoria) {
+        painter.setBrush(QColor(0, 0, 0, 170));
+        painter.setPen(Qt::NoPen);
+        painter.drawRect(0, 0, width(), height());
+        QFont fuenteVictoria("Courier New", 40, QFont::Bold);
+        painter.setFont(fuenteVictoria);
+        painter.setPen(QColor(255, 215, 0));
+        QString textoV = "¡VICTORIA!";
+        painter.drawText((width() - QFontMetrics(fuenteVictoria).horizontalAdvance(textoV)) / 2, 300, textoV);
+        QFont fuenteSub("Courier New", 16, QFont::Bold);
+        painter.setFont(fuenteSub);
+        painter.setPen(Qt::white);
+        QString textoSub = "PRESS [R] TO PLAY AGAIN";
+        painter.drawText((width() - QFontMetrics(fuenteSub).horizontalAdvance(textoSub)) / 2, 380, textoSub);
     }
 }
