@@ -246,6 +246,9 @@ void MainWindow::actualizarJuego(){
         update();
         return;
     }
+    for (plataformas* plat : Plataforma) {
+        plat->mover(0.016f);
+    }
 
     jugador->mover(0.016f);
 
@@ -267,6 +270,7 @@ void MainWindow::actualizarJuego(){
 
         if (colisionX && cayendo && cruzoBordeArriba) {
             jugador->setY(yPlataforma - 22.0f);
+            jugador->setX(jugador->GETX() + plat->GETDeltaX());
             jugador->setVy(0.0f);
             jugador->setEnAire(false);
             enAlgunaPlataforma = true;
