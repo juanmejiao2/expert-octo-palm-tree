@@ -2,7 +2,54 @@
 #include "./ui_mainwindow.h"
 #include <QKeyEvent>
 #include <QPainter>
+#include <stdexcept>
 
+// Recorrido del ascenso del nivel 2 (de abajo hacia arriba). y = línea donde se para Punisher.
+struct NubeNivel2 {
+    float x, y, ancho;
+    float amplitud, omega, fase;
+};
+static const NubeNivel2 RECORRIDO_NIVEL2[] = {
+    {260,   520, 240,   0, 0.0f, 0.0f},     //  0
+    {560,   380, 160,  60, 0.9f, 0.0f},     //  1
+    {860,   240, 344,   0, 0.0f, 0.0f},     //  2
+    {560,   100, 160,  80, 1.0f, 1.5f},     //  3
+    {240,   -40, 240,   0, 0.0f, 0.0f},     //  4
+    {520,  -180, 160, 100, 0.8f, 3.0f},     //  5
+    {860,  -320, 240,  40, 0.6f, 0.5f},     //  6
+    {560,  -460, 160,  90, 1.1f, 2.0f},     //  7
+    {180,  -600, 344,   0, 0.0f, 0.0f},     //  8
+    {560,  -740, 160, 110, 0.9f, 0.0f},     //  9
+    {880,  -880, 240,   0, 0.0f, 0.0f},     // 10
+    {600, -1020, 160, 120, 1.0f, 1.0f},     // 11
+    {280, -1160, 240,  60, 0.7f, 2.5f},     // 12
+    {560, -1300, 160, 120, 1.2f, 4.0f},     // 13
+    {820, -1440, 344,   0, 0.0f, 0.0f},     // 14
+    {540, -1580, 160, 120, 1.1f, 0.5f},     // 15
+    {240, -1720, 240,  80, 0.8f, 3.5f},     // 16
+    {520, -1860, 160, 130, 1.3f, 1.2f},     // 17
+    {840, -2000, 240,  50, 0.9f, 2.8f},     // 18
+    {560, -2140, 160, 100, 1.2f, 0.0f},     // 19
+    {240, -2280, 800,   0, 0.0f, 0.0f},     // 20: arena de Gaitán
+};
+
+// Revisa que cada nube se pueda alcanzar con el salto de Punisher y que no se salga de la pantalla.
+//nube imposible, lanza una excepción que dice cuál es.
+static void validarRecorrido(float anchoPantalla) {
+    const float alturaSalto = 800.0f * 800.0f / (2.0f * 1500.0f);
+    float yAnterior = 660.0f;
+    int indice = 0;
+    for (const NubeNivel2 &n : RECORRIDO_NIVEL2) {
+        if (yAnterior - n.y > alturaSalto) {
+            throw std::logic_error("la nube " + std::to_string(indice) + " queda más alta que el salto de Punisher");
+        }
+        if (n.x - n.amplitud < 0.0f || n.x + n.ancho + n.amplitud > anchoPantalla) {
+            throw std::logic_error("la nube " + std::to_string(indice) + " se sale de la pantalla al moverse");
+        }
+        yAnterior = n.y;
+        indice++;
+    }
+}
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow){
     ui->setupUi(this);
 
@@ -62,6 +109,7 @@ void MainWindow::reiniciarNivel() {
     proyectiles.clear();
     qDeleteAll(Plataforma);
     Plataforma.clear();
+    enemigosEnNube.clear();
     qDeleteAll(enemigos);
     enemigos.clear();
 
@@ -233,6 +281,7 @@ void MainWindow::cargarNivel2() {
     proyectiles.clear();
     qDeleteAll(Plataforma);
     Plataforma.clear();
+    enemigosEnNube.clear();
     qDeleteAll(enemigos);
     enemigos.clear();
     balasEnMapa.clear();
@@ -250,15 +299,46 @@ void MainWindow::cargarNivel2() {
     jugador->setVelocidadX(0.0f);
     jugador->setSueloY(660.0f);   // por ahora hay piso;
 
-    // Nubes de prueba
-    //                                   x       y     ancho  alto  amplitud omega  fase
-    Plataforma.append(new plataformas(300.0f, 540.0f, 160.0f, 24.0f, 50.0f, 1.2f, 0.0f));
-    Plataforma.append(new plataformas(600.0f, 430.0f, 160.0f, 24.0f, 70.0f, 0.9f, 1.5f));
-    Plataforma.append(new plataformas(900.0f, 320.0f, 160.0f, 24.0f, 40.0f, 1.6f, 3.0f));
-    Plataforma.append(new plataformas(600.0f, 200.0f, 160.0f, 24.0f, 60.0f, 1.1f, 0.7f));
-    Plataforma.append(new plataformas(300.0f, 80.0f, 160.0f, 24.0f, 50.0f, 1.4f, 2.2f));
-    Plataforma.append(new plataformas(650.0f, -40.0f, 160.0f, 24.0f, 80.0f, 0.8f, 4.0f));
-    Plataforma.append(new plataformas(950.0f, -160.0f, 160.0f, 24.0f, 40.0f, 1.7f, 1.0f));
+    // Recorrido del ascenso (primero se valida la tabla)
+    try {
+        validarRecorrido(static_cast<float>(width()));
+    } catch (const std::logic_error &e) {
+        qWarning("Recorrido del nivel 2 inválido: %s", e.what());
+    }
+    for (const NubeNivel2 &n : RECORRIDO_NIVEL2) {
+        Plataforma.append(new plataformas(n.x, n.y, n.ancho, 24.0f, n.amplitud, n.omega, n.fase));
+    }
+
+    // Se ubican respecto a su nube
+    auto ponerEnemigo = [this](int indiceNube, float desplazamientoX, TipoEnemigoArma tipo, short vida) {
+        plataformas *nube = Plataforma[indiceNube];
+        enemigo *nuevo = new enemigo(nube->GETX() + desplazamientoX, nube->GETY(), true, tipo, vida);
+        nuevo->setRangoVisionY(320.0f);
+        enemigos.append(nuevo);
+        enemigosEnNube.append(qMakePair(nuevo, nube));
+    };
+    if (dificultadJuego == 0) {
+        short vidaFacil = 50;
+        ponerEnemigo(2, 152.0f, TipoEnemigoArma::conservador, vidaFacil);
+        ponerEnemigo(4, 100.0f, TipoEnemigoArma::liberal, vidaFacil);
+        ponerEnemigo(8, 152.0f, TipoEnemigoArma::esmadpistolon, vidaFacil);
+        ponerEnemigo(12, 100.0f, TipoEnemigoArma::liberal, vidaFacil);
+        ponerEnemigo(14, 152.0f, TipoEnemigoArma::esmadpistolon, vidaFacil);
+    } else {
+        short vidaCrook = 140;
+        short vidaPesado = 250;
+        ponerEnemigo(2, 152.0f, TipoEnemigoArma::esmadpistolon, vidaCrook);
+        ponerEnemigo(4, 100.0f, TipoEnemigoArma::liberal, vidaCrook);
+        ponerEnemigo(6, 100.0f, TipoEnemigoArma::conservador, vidaCrook);
+        ponerEnemigo(8, 60.0f, TipoEnemigoArma::esmadpistolon, vidaCrook);
+        ponerEnemigo(8, 210.0f, TipoEnemigoArma::lanzallamas, vidaPesado);
+        ponerEnemigo(10, 100.0f, TipoEnemigoArma::conservador, vidaCrook);
+        ponerEnemigo(12, 100.0f, TipoEnemigoArma::esmadpistolon, vidaCrook);
+        ponerEnemigo(14, 60.0f, TipoEnemigoArma::esmadpistolon, vidaCrook);
+        ponerEnemigo(14, 210.0f, TipoEnemigoArma::lanzallamas, vidaPesado);
+        ponerEnemigo(16, 100.0f, TipoEnemigoArma::liberal, vidaCrook);
+        ponerEnemigo(18, 100.0f, TipoEnemigoArma::esmadpistolon, vidaCrook);
+    }
 }
 
 MainWindow::~MainWindow() {
@@ -287,6 +367,13 @@ void MainWindow::actualizarJuego(){
     }
     for (plataformas* plat : Plataforma) {
         plat->mover(0.016f);
+    }
+
+    for (const auto &par : enemigosEnNube) {
+        float dx = par.second->GETDeltaX();
+        if (dx != 0.0f) {
+            par.first->setX(par.first->GETX() + dx);
+        }
     }
 
     jugador->mover(0.016f);
@@ -470,6 +557,10 @@ if (nivelActual == 1) {
         enemigo->mover(0.016f);
         bool enemigoEnPantalla = (enemigo->GETX() >= camaraX - 150 && enemigo->GETX() <= camaraX + width() + 150);
 
+        if (nivelActual == 2 && (enemigo->GETY() < camaraY - 100 || enemigo->GETY() > camaraY + height() + 100)) {
+            enemigoEnPantalla = false;
+        }
+
         if (enemigoEnPantalla && enemigo->puededisparar()) {
             float origenX = enemigo->GETX();
             float origenY = enemigo->GETY() - 50.0f;
@@ -622,7 +713,7 @@ if (nivelActual == 1) {
 
         if (proyectilEliminado) continue;
 
-        if (proyectiles[i]->GETY() >= 700.0f || proyectiles[i]->GETX() < camaraX - 300 || proyectiles[i]->GETX() > camaraX + width() + 300) {
+        if (proyectiles[i]->GETY() >= 700.0f || proyectiles[i]->GETY() < camaraY - 300 || proyectiles[i]->GETX() < camaraX - 300 || proyectiles[i]->GETX() > camaraX + width() + 300) {
             delete proyectiles[i];
             proyectiles.removeAt(i);
         }
