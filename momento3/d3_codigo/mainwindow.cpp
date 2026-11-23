@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     moviendoDerecha = false;
     moviendoIzquierda = false;
     camaraX = 0.0f;
+    camaraY = 0.0f;
     enSeleccionDificultad = true;
     dificultadJuego = 0;
     contadorFramesGO = 0;
@@ -65,6 +66,7 @@ void MainWindow::reiniciarNivel() {
     enemigos.clear();
 
     camaraX = 0.0f;
+    camaraY = 0.0f;
     juegoTerminado = false;
     sectorLimpio = false;
     nivelActual = 1;
@@ -238,6 +240,7 @@ void MainWindow::cargarNivel2() {
     explosionesActivas.clear();
 
     camaraX = 0.0f;
+    camaraY = 0.0f;
     sectorLimpio = false;
     juegoTerminado = false;
 
@@ -252,6 +255,10 @@ void MainWindow::cargarNivel2() {
     Plataforma.append(new plataformas(300.0f, 540.0f, 160.0f, 24.0f, 50.0f, 1.2f, 0.0f));
     Plataforma.append(new plataformas(600.0f, 430.0f, 160.0f, 24.0f, 70.0f, 0.9f, 1.5f));
     Plataforma.append(new plataformas(900.0f, 320.0f, 160.0f, 24.0f, 40.0f, 1.6f, 3.0f));
+    Plataforma.append(new plataformas(600.0f, 200.0f, 160.0f, 24.0f, 60.0f, 1.1f, 0.7f));
+    Plataforma.append(new plataformas(300.0f, 80.0f, 160.0f, 24.0f, 50.0f, 1.4f, 2.2f));
+    Plataforma.append(new plataformas(650.0f, -40.0f, 160.0f, 24.0f, 80.0f, 0.8f, 4.0f));
+    Plataforma.append(new plataformas(950.0f, -160.0f, 160.0f, 24.0f, 40.0f, 1.7f, 1.0f));
 }
 
 MainWindow::~MainWindow() {
@@ -429,9 +436,17 @@ if (nivelActual == 1) {
             jugador->setX(camaraX + width() - 80.0f);
         }
     }
-}
-else {
+} else {
     camaraX = 0.0f;           // nivel 2: la pantalla no se desplaza de lado
+
+    float posEnPantallaY = jugador->GETY() - camaraY;
+    if (posEnPantallaY < 250.0f) {
+        camaraY = jugador->GETY() - 250.0f;          // sube con él
+    } else if (posEnPantallaY > 500.0f) {
+        camaraY = jugador->GETY() - 500.0f;          // baja si se cae
+    }
+    if (camaraY > 0.0f) camaraY = 0.0f;             // no mostrar debajo de la plaza
+    if (camaraY < -2880.0f) camaraY = -2880.0f;      // tope: la arena de Gaitán
 }
 
     if (camaraX < 0.0f) {
@@ -765,7 +780,10 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
 
     if (nivelActual == 2) {
-        painter.fillRect(0, 0, width(), height(), QColor(120, 170, 225));
+        // cielo provisional: se aclara a medida que se sube (luego va la imagen de fondo)
+        float altura = qBound(0.0f, -camaraY / 2880.0f, 1.0f);
+        QColor cielo(111 + qRound(101 * altura), 164 + qRound(90 * altura), 198 + qRound(52 * altura));
+        painter.fillRect(0, 0, width(), height(), cielo);
     } else if (!fondoLvl1Escalado.isNull() && fondoLvl1Escalado.width() > 0) {
         int anchoFondo = fondoLvl1Escalado.width();
         float anchoMaximoNivel = anchoFondo * 5.0f;
@@ -785,6 +803,8 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             painter.drawPixmap(xPos, 0, fondoLvl1Escalado);
         }
     }
+    painter.save();
+    painter.translate(0, -camaraY);
 
     int indiceFrame = 0;
     int spriteY = 1669;
@@ -1231,6 +1251,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             painter.drawPixmap(piesX - 82, static_cast<int>(en->GETY()) + 4 - 124, cuadroCarro);
         }
     }
+        painter.restore();
 
     painter.setPen(Qt::white);
     QFont fuenteHud("Arial", 14, QFont::Bold);
@@ -1245,6 +1266,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     float porcentajeSalud = qMax(0.0f, static_cast<float>(jugador->GETVida()) / 100.0f);
     painter.setBrush(Qt::red);
     painter.drawRect(100, 55, static_cast<int>(200 * porcentajeSalud), 22);
+
+    painter.save();
+    painter.translate(0, -camaraY);
 
     for (Proyectil* p : proyectiles) {
         int projPantallaX = static_cast<int>(p->GETX() - camaraX);
@@ -1274,6 +1298,10 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
         int platPantallaX = static_cast<int>(hbplat.x() - camaraX);
         int platPantallaY = static_cast<int>(hbplat.y());
+
+        if (platPantallaY < camaraY - 100 || platPantallaY > camaraY + height() + 100) {
+            continue;             // fuera de la pantalla: no se dibuja
+        }
 
         int offsetVisualY = -5;
         int alturaVisualSprite = 60;
@@ -1340,6 +1368,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             }
         }
     }
+    painter.restore();            // fin del mundo
 
     if (sectorLimpio) {
         contadorFramesGO++;

@@ -53,6 +53,7 @@ private:
     bool moviendoDerecha;
     bool moviendoIzquierda;
     float camaraX;
+    float camaraY;
     QPixmap fondoLvl1Escalado;
     QPixmap spriteGameOver;
     QPixmap spriteSheetPunisher;
