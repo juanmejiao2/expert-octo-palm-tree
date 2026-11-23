@@ -9,6 +9,7 @@ enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, sho
     vida = vidaInicial;
     estadoActual=EstadoEnemigo::idle;
     TipoEnemigo = _tipo;
+    rangoVisionY = 140.0f;
     tiempoPatrulla = _x * 0.01f;
 
     if (TipoEnemigo == TipoEnemigoArma::lanzallamas) {
@@ -66,7 +67,7 @@ void enemigo::actualizar(float xjugador, float yjugador){
     float distanciaAbsX= std::abs(distanciaX);
     float distanciaAbsY = std::abs(yjugador - y);
 
-    if (distanciaAbsX <= rangoVision && distanciaAbsY <= 140.0f){
+    if (distanciaAbsX <= rangoVision && distanciaAbsY <= rangoVisionY){
         if (estadoActual==EstadoEnemigo::idle){
             estadoActual=EstadoEnemigo::alerta;
             MostrarAlerta=true;
@@ -169,3 +170,6 @@ bool enemigo::estaLanzandoLlama() const {
     long long enemigo::tiempoDesdeDisparo() const {
     return temporizadorDisparo.elapsed();
 }
+    void enemigo::setRangoVisionY(float nuevoRango) {
+        rangoVisionY = nuevoRango;
+    }

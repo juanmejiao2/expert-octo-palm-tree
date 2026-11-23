@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QPair>
 #include "jugador.h"
 #include "enemigos.h"
 #include "proyectil.h"
@@ -71,6 +72,7 @@ private:
     QPixmap spriteGranada;
     QList<CuraSuelo> curasEnMapa;
     QList<enemigo*> enemigos;
+    QList<QPair<enemigo*, plataformas*>> enemigosEnNube;
     QList<Proyectil*>proyectiles;
     QList<plataformas*> Plataforma;
     QList<BalaSuelo> balasEnMapa;
