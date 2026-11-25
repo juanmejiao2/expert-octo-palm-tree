@@ -93,6 +93,7 @@ private:
     JefeGaitan *jefe;
     bool peleaActiva;
     bool victoria;
+    float recargaMunicion;
     void borrarJefe();
     bool enSeleccionDificultad;
     int dificultadJuego;

@@ -26,6 +26,10 @@ private:
     bool animacionDano;
     QElapsedTimer temporizadorDano;
     float Stagger;
+    bool atacando;
+    bool impactoLanzado;
+    QElapsedTimer temporizadorAtaque;
+    void tiemposAtaque(int &duracion, int &impacto) const;
 
 public:
     enemigo();
@@ -48,6 +52,8 @@ public:
     long long tiempoDesdeDisparo() const;
     void setRangoVisionY(float nuevoRango);
     bool estaEnAnimacionDano() const;
+    long long tiempoEnAtaque() const;
+    long long cicloLlamas() const;
 
 };
 

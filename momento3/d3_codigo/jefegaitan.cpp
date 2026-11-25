@@ -35,27 +35,27 @@ JefeGaitan::JefeGaitan(int dificultad)
 
 void JefeGaitan::configurarDificultad(int dificultad) {
     if (dificultad == 0) {
-        tasaAprendizaje = 0.15f;
-        exploracion = 0.35f;
+        tasaAprendizaje = 0.10f;
+        exploracion = 0.40f;
         usaPrediccion = false;
-        cadenciaBase = 2.6f;
-        giroLaser = 0.9f;
-        duracionLaser = 2.0f;
+        cadenciaBase = 3.4f;
+        giroLaser = 0.2f;
+        duracionLaser = 1.4f;
+        factorDanio = 0.4f;
+        cantidadPendulos = 1;
+        cantidadLluvia = 3;
+        vidaMaxima = 250;
+    } else {
+        tasaAprendizaje = 0.25f;
+        exploracion = 0.20f;
+        usaPrediccion = true;
+        cadenciaBase = 2.4f;
+        giroLaser = 0.45f;
+        duracionLaser = 1.8f;
         factorDanio = 0.7f;
         cantidadPendulos = 2;
         cantidadLluvia = 4;
-        vidaMaxima = 600;
-    } else {
-        tasaAprendizaje = 0.35f;
-        exploracion = 0.12f;
-        usaPrediccion = true;
-        cadenciaBase = 1.7f;
-        giroLaser = 1.8f;
-        duracionLaser = 2.4f;
-        factorDanio = 1.2f;
-        cantidadPendulos = 3;
-        cantidadLluvia = 6;
-        vidaMaxima = 1000;
+        vidaMaxima = 450;
     }
     vida = vidaMaxima;
 }
@@ -81,13 +81,13 @@ void JefeGaitan::percibir(const jugador &j, float dt) {
     xJugador = xActual;
     yJugador = static_cast<float>(h.center().y());
     jugadorEnAire = j.GETEnElAire();
-    for (int i = 0; i < 3; i++) tiempoEnZona[i] *= 0.995f;   // va olvidando lo viejo
+    for (int i = 0; i < 3; i++) tiempoEnZona[i] *= 0.995f;
     tiempoEnZona[zonaDe(xJugador)] += dt;
 }
 
 float JefeGaitan::puntoObjetivoX(float tiempoVuelo) const {
     if (!usaPrediccion) return xJugador;
-    return xJugador + vxJugador * tiempoVuelo;          // x + vx·t
+    return xJugador + vxJugador * tiempoVuelo;
 }
 
 // ---------------------------------------------------------------- 2. RAZONAMIENTO
@@ -101,7 +101,7 @@ AtaqueGaitan JefeGaitan::razonar() {
             if (efectividad[i] > efectividad[elegido]) elegido = i;
         }
     }
-    if (elegido == ultimoAtaque && repeticiones >= 2) {         // nunca 3 veces seguidas el mismo
+    if (elegido == ultimoAtaque && repeticiones >= 2) {
         elegido = (elegido + 1 + static_cast<int>(aleatorio() * 2.0f)) % 3;
     }
     repeticiones = (elegido == ultimoAtaque) ? repeticiones + 1 : 1;
@@ -115,7 +115,7 @@ void JefeGaitan::actuar(AtaqueGaitan ataque, QList<Proyectil*> &proyectiles) {
     int extra = fase2 ? 1 : 0;
     if (ataque == AtaqueLaser) {
         faseLaser = 1;
-        tiempoLaser = 0.6f;
+        tiempoLaser = 0.9f;
         laserGolpeo = false;
         acumuladoLaser = 0.0f;
         QPointF ojos = GETOjos();
@@ -142,6 +142,7 @@ void JefeGaitan::actuar(AtaqueGaitan ataque, QList<Proyectil*> &proyectiles) {
             float objetivo = (i % 2 == 0) ? puntoObjetivoX(1.0f) : ZONAS_X[zonaFavorita];
             objetivo += (aleatorio() - 0.5f) * 240.0f;
             float vy0 = -300.0f - aleatorio() * 120.0f;
+
             float a = 0.5f * 980.0f, b = vy0, c = y0 - PISO_ARENA;
             float t = (-b + std::sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
             Proyectil *p = new Proyectil(x0, y0, (objetivo - x0) / t, vy0, false, TipoMovimientoProyectil::Parabolico);
@@ -158,7 +159,6 @@ void JefeGaitan::aprender(int ataque, bool acerto) {
     efectividad[ataque] += tasaAprendizaje * (resultado - efectividad[ataque]);
 }
 
-// ---------------------------------------------------------------- ciclo de cada fotograma
 void JefeGaitan::actualizar(float dt, const jugador &j, QList<Proyectil*> &proyectiles) {
     if (GETEstado() == EstadoEnemigo::destruido) return;
     percibir(j, dt);
@@ -169,7 +169,7 @@ void JefeGaitan::actualizar(float dt, const jugador &j, QList<Proyectil*> &proye
         QPointF ojos = GETOjos();
         float objetivo = std::atan2(yJugador - static_cast<float>(ojos.y()), puntoObjetivoX(0.4f) - static_cast<float>(ojos.x()));
         float diferencia = std::remainder(objetivo - anguloLaser, 6.2831853f);
-        float paso = giroLaser * dt;
+        float paso = (faseLaser == 2) ? giroLaser * dt : 0.0f;
         if (diferencia > paso) diferencia = paso;
         if (diferencia < -paso) diferencia = -paso;
         anguloLaser += diferencia;
@@ -177,7 +177,7 @@ void JefeGaitan::actualizar(float dt, const jugador &j, QList<Proyectil*> &proye
         if (tiempoLaser <= 0.0f) {
             if (faseLaser == 1) {
                 faseLaser = 2;
-                tiempoLaser = duracionLaser + (fase2 ? 1.0f : 0.0f);
+                tiempoLaser = duracionLaser + (fase2 ? 0.5f : 0.0f);
             } else {
                 faseLaser = 0;
                 aprender(AtaqueLaser, laserGolpeo);
@@ -190,14 +190,14 @@ void JefeGaitan::actualizar(float dt, const jugador &j, QList<Proyectil*> &proye
     if (cooldownAtaque <= 0.0f) {
         actuar(razonar(), proyectiles);
         ataquesDesdeTeleport++;
-        cooldownAtaque = cadenciaBase * (fase2 ? 0.65f : 1.0f);
+        cooldownAtaque = cadenciaBase * (fase2 ? 0.8f : 1.0f);
         if (ataquesDesdeTeleport >= 2 && faseLaser == 0) teletransportar();
     }
 }
 
 void JefeGaitan::teletransportar() {
     int nueva = (zonaActual + 1 + static_cast<int>(aleatorio() * 2.0f)) % 3;
-    if (nueva == zonaDe(xJugador)) nueva = (nueva + 1) % 3;     // no aparecer encima de Punisher
+    if (nueva == zonaDe(xJugador)) nueva = (nueva + 1) % 3;
     zonaActual = nueva;
     x = ZONAS_X[zonaActual];
     ataquesDesdeTeleport = 0;
@@ -247,6 +247,7 @@ QPointF JefeGaitan::GETFinLaser() const {
     return QPointF(o.x() + std::cos(anguloLaser) * 1600.0f, o.y() + std::sin(anguloLaser) * 1600.0f);
 }
 
+// ¿El segmento ojos->fin del rayo cruza el rectángulo? (recorte de Liang-Barsky, sin raíces ni trigonometría)
 static bool segmentoTocaRect(float x0, float y0, float x1, float y1, const QRectF &r) {
     float dx = x1 - x0, dy = y1 - y0;
     float p[4] = {-dx, dx, -dy, dy};
@@ -273,9 +274,9 @@ int JefeGaitan::aplicarLaser(const QRectF &hitboxJugador, float dt) {
     }
     laserGolpeo = true;
     acumuladoLaser += dt;
-    if (acumuladoLaser >= 0.25f) {
-        acumuladoLaser -= 0.25f;
-        return escalarDanio(8);
+    if (acumuladoLaser >= 0.3f) {
+        acumuladoLaser -= 0.3f;
+        return escalarDanio(6);
     }
     return 0;
 }

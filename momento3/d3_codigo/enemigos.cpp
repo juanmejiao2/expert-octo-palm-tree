@@ -87,6 +87,7 @@ void enemigo::actualizar(float xjugador, float yjugador){
             if (temporizadoralerta.elapsed()>800){
                 estadoActual= EstadoEnemigo::disparando;
                 MostrarAlerta=false;
+                atacando = false;
                 temporizadorDisparo.restart();
                 temporizadorRafagaLlamas.restart();
             }
@@ -95,6 +96,7 @@ void enemigo::actualizar(float xjugador, float yjugador){
         estadoActual=EstadoEnemigo::idle;
         MostrarAlerta=false;
         vx = 0.0f;
+        atacando = false;
         temporizadorRafagaLlamas.restart();
     }
     if (estadoActual == EstadoEnemigo::alerta || estadoActual == EstadoEnemigo::disparando) {
@@ -112,26 +114,65 @@ void enemigo::actualizar(float xjugador, float yjugador){
     }
 }
 
-bool enemigo::puededisparar(){
-    if (estadoActual != EstadoEnemigo::disparando || !TieneArma) return false;
-    if (Stagger > 0.0f) return false;
+void enemigo::tiemposAtaque(int &duracion, int &impacto) const {
+    if (TipoEnemigo == TipoEnemigoArma::esmadpistolon) {
+        duracion = 600;  impacto = 250;
+    } else if (TipoEnemigo == TipoEnemigoArma::lanzagranadas) {
+        duracion = 620;  impacto = 330;
+    } else {
+        duracion = 680;  impacto = 240;
+    }
+}
 
-    int intervaloDisparo = 1200;
+bool enemigo::puededisparar(){
+    if (estadoActual != EstadoEnemigo::disparando || !TieneArma) {
+        atacando = false;
+        return false;
+    }
+    if (Stagger > 0.0f) {
+        atacando = false;
+        return false;
+    }
+
     TipoEnemigoArma tipo = GETTipoEnemigo();
 
     if (tipo == TipoEnemigoArma::lanzallamas) {
         if (!estaLanzandoLlama()) return false;
-        intervaloDisparo = 260;
-
-    } else if (tipo == TipoEnemigoArma::esmadpistolon) {
-    intervaloDisparo = 1400;
-
-    } else if (tipo == TipoEnemigoArma::lanzagranadas) {
-    intervaloDisparo = 1800;
+        if (temporizadorDisparo.elapsed() > 260){
+            temporizadorDisparo.restart();
+            return true;
+        }
+        return false;
     }
 
-    if (temporizadorDisparo.elapsed() > intervaloDisparo){
-        temporizadorDisparo.restart();
+    int intervaloDisparo = 1200;
+    if (tipo == TipoEnemigoArma::esmadpistolon) {
+        intervaloDisparo = 1400;
+
+    } else if (tipo == TipoEnemigoArma::lanzagranadas) {
+        intervaloDisparo = 1800;
+    }
+
+    int duracion, impacto;
+    tiemposAtaque(duracion, impacto);
+
+    if (!atacando) {
+        if (temporizadorDisparo.elapsed() > intervaloDisparo) {
+            temporizadorDisparo.restart();
+            temporizadorAtaque.restart();
+            atacando = true;
+            impactoLanzado = false;
+        }
+        return false;
+    }
+
+    long long t = temporizadorAtaque.elapsed();
+    if (t >= duracion) {
+        atacando = false;
+        return false;
+    }
+    if (!impactoLanzado && t >= impacto) {
+        impactoLanzado = true;
         return true;
     }
     return false;
@@ -201,4 +242,15 @@ bool enemigo::estaLanzandoLlama() const {
 }
     void enemigo::setRangoVisionY(float nuevoRango) {
         rangoVisionY = nuevoRango;
+    }
+
+    long long enemigo::tiempoEnAtaque() const {
+        if (!atacando || estadoActual != EstadoEnemigo::disparando) return -1;
+        int duracion, impacto;
+        tiemposAtaque(duracion, impacto);
+        long long t = temporizadorAtaque.elapsed();
+        return (t < duracion) ? t : -1;
+    }
+    long long enemigo::cicloLlamas() const {
+        return temporizadorRafagaLlamas.elapsed() % 2250;
     }
