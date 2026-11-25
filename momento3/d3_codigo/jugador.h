@@ -67,6 +67,8 @@ public:
     void setX(float nuevaX);
     void setY(float nuevaY);
     void setVy(float nuevaVy);
+    float GETVx() const;
+    void setVx(float nuevaVx);
     short GETVida() const;
     short GETDanoBala() const;
     void setVida(short nuevaVida);

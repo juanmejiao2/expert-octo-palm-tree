@@ -9,8 +9,11 @@ enemigo::enemigo(float _x, float _y, bool _tieneArma, TipoEnemigoArma _tipo, sho
     vida = vidaInicial;
     estadoActual=EstadoEnemigo::idle;
     TipoEnemigo = _tipo;
-    rangoVisionY = 140.0f;
+    rangoVisionY = 380.0f;
     tiempoPatrulla = _x * 0.01f;
+    animacionDano = false;
+    temporizadorDano.start();
+    Stagger=0.0f;
 
     if (TipoEnemigo == TipoEnemigoArma::lanzallamas) {
         rangoVision = 220.0f;
@@ -36,6 +39,9 @@ enemigo::~enemigo(){
 
 void enemigo::mover(float dt){
     if (estadoActual == EstadoEnemigo::destruido) return;
+    if (Stagger > 0.0f) {
+        Stagger = std::max(0.0f, Stagger - dt);
+    }
 
     if (TipoEnemigo == TipoEnemigoArma::lanzagranadas|| TipoEnemigo == TipoEnemigoArma::lanzallamas) {
         vx = 0.0f;
@@ -62,6 +68,10 @@ void enemigo::mover(float dt){
 void enemigo::actualizar(float xjugador, float yjugador){
 
     if (estadoActual== EstadoEnemigo::destruido) return;
+
+    if (animacionDano && temporizadorDano.elapsed() > 220) {
+        animacionDano = false;
+    }
 
     float distanciaX= xjugador-x;
     float distanciaAbsX= std::abs(distanciaX);
@@ -103,9 +113,10 @@ void enemigo::actualizar(float xjugador, float yjugador){
 }
 
 bool enemigo::puededisparar(){
-    if (estadoActual !=EstadoEnemigo::disparando|| !TieneArma) return false;
+    if (estadoActual != EstadoEnemigo::disparando || !TieneArma) return false;
+    if (Stagger > 0.0f) return false;
 
-    int intervaloDisparo = 2300;
+    int intervaloDisparo = 1200;
     TipoEnemigoArma tipo = GETTipoEnemigo();
 
     if (tipo == TipoEnemigoArma::lanzallamas) {
@@ -113,10 +124,10 @@ bool enemigo::puededisparar(){
         intervaloDisparo = 260;
 
     } else if (tipo == TipoEnemigoArma::esmadpistolon) {
-    intervaloDisparo = 2000;
+    intervaloDisparo = 1400;
 
     } else if (tipo == TipoEnemigoArma::lanzagranadas) {
-    intervaloDisparo = 2500;
+    intervaloDisparo = 1800;
     }
 
     if (temporizadorDisparo.elapsed() > intervaloDisparo){
@@ -130,11 +141,24 @@ void enemigo::disparar() {
 }
 
 void enemigo::recibirdano(int dano) {
+    if (dano <= 0 || estadoActual == EstadoEnemigo::destruido) return;
+
     vida -= static_cast<short>(dano);
     if (vida < 0) vida = 0;
+
+    animacionDano = true;
+    temporizadorDano.restart();
+    Stagger = std::min(0.85f, Stagger + 0.28f);
+
     if (vida <= 0) {
         estadoActual = EstadoEnemigo::destruido;
+        animacionDano = false;
+        Stagger = 0.0f;
     }
+}
+
+bool enemigo::estaEnAnimacionDano() const {
+    return animacionDano;
 }
 
 EstadoEnemigo enemigo::GETEstado() const {

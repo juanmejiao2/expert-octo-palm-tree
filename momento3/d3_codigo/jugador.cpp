@@ -115,8 +115,11 @@ void jugador::mover(float dt) {
     x += vx * dt;
     y += vy * dt;
 
-    if (x < 0.0f){
+    if (x < 0.0f) {
         x = 0.0f;
+        if (vx < 0.0f) {
+            vx = 0.0f;
+        }
     }
 
     if (y >= sueloY) {
@@ -301,4 +304,11 @@ void jugador::setVida(short nuevaVida) {
 }
 void jugador::setSueloY(float nuevoSuelo) {
     sueloY = nuevoSuelo;
+}
+float jugador::GETVx() const {
+    return vx;
+}
+
+void jugador::setVx(float nuevaVx) {
+    vx = nuevaVx;
 }

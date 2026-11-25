@@ -64,6 +64,10 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     jefe = nullptr;
     peleaActiva = false;
     victoria = false;
+    camionEsmad = nullptr;
+    peleaCamionActiva = false;
+    camionDerrotadoPendiente = false;
+    tiempoTransicionNivel2 = 0.0f;
 
     this->setFixedSize(1280,720);
 
@@ -80,8 +84,9 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     spriteLiberal.load("Liberales_sprites.png");
     spritePistolero.load("esmad_pistolon.png");
     spriteGranadero.load("lanzagranada.png");
-    spriteCarro.load("carro_lanzagranadas.png");
     spriteGranada.load("granada.png");
+    spriteCamionEsmad.load("camionesmad.png");
+    spriteSierra.load("sierras.png");
     QPixmap fuego("fuego.png");
     if (!fuego.isNull()) {
         spriteFuego = fuego;
@@ -116,6 +121,11 @@ void MainWindow::reiniciarNivel() {
     qDeleteAll(enemigos);
     enemigos.clear();
     borrarJefe();
+    delete camionEsmad;
+    camionEsmad = nullptr;
+    peleaCamionActiva = false;
+    camionDerrotadoPendiente = false;
+    tiempoTransicionNivel2 = 0.0f;
 
     camaraX = 0.0f;
     camaraY = 0.0f;
@@ -292,6 +302,11 @@ void MainWindow::cargarNivel2() {
     curasEnMapa.clear();
     explosionesActivas.clear();
     borrarJefe();
+    delete camionEsmad;
+    camionEsmad = nullptr;
+    peleaCamionActiva = false;
+    camionDerrotadoPendiente = false;
+    tiempoTransicionNivel2 = 0.0f;
 
     camaraX = 0.0f;
     camaraY = 0.0f;
@@ -354,6 +369,8 @@ void MainWindow::borrarJefe() {
 }
 
 MainWindow::~MainWindow() {
+    delete camionEsmad;
+    camionEsmad = nullptr;
     delete jefe;
     qDeleteAll(enemigos);
     delete jugador;
@@ -453,6 +470,15 @@ void MainWindow::actualizarJuego(){
                     }
                 }
             }
+            if (camionEsmad != nullptr && camionEsmad->GETEstado() != EstadoEnemigo::destruido) {
+                if (hitboxGolpe.intersects(camionEsmad->GETHitbox())) {
+                    if (camionEsmad->recibirDisparo(25)) {
+                        camionDerrotadoPendiente = true;
+                        tiempoTransicionNivel2 = 0.0f;
+                        explosionesActivas.append({camionEsmad->GETX(), camionEsmad->GETY() - 65.0f, 0, 0.0f});
+                    }
+                }
+            }
         }
     }
 
@@ -493,50 +519,108 @@ void MainWindow::actualizarJuego(){
             }
         }
     }
-if (nivelActual == 1) {
-    float posEnPantallaX = jugador->GETX() - camaraX;
-    if (posEnPantallaX > 640.0f) {
-        camaraX = jugador->GETX() - 640.0f;
-    } else if (posEnPantallaX < 400.0f && camaraX > 0.0f) {
-        camaraX = jugador->GETX() - 400.0f;
-    }
+    if (nivelActual == 1) {
+        if (dificultadJuego == 0) {
+            if (camionEsmad != nullptr) {
+                delete camionEsmad;
+                camionEsmad = nullptr;
+            }
+            peleaCamionActiva = false;
+            camionDerrotadoPendiente = false;
+        }
+        if (camionDerrotadoPendiente) {
+            tiempoTransicionNivel2 += 0.016f;
+            for (int e = explosionesActivas.size() - 1; e >= 0; --e) {
+                explosionesActivas[e].tiempoFrame += 0.016f;
+                if (explosionesActivas[e].tiempoFrame >= 0.08f) {
+                    explosionesActivas[e].tiempoFrame = 0.0f;
+                    explosionesActivas[e].frameActual++;
+                    if (explosionesActivas[e].frameActual >= 4) {
+                        explosionesActivas.removeAt(e);
+                    }
+                }
+            }
+            if (tiempoTransicionNivel2 >= 1.1f) {
+                cargarNivel2();
+                update();
+                return;
+            }
+            update();
+            return;
+        }
 
-    float limiteDerechoSectorActual = 2500.0f;
-    if (jugador->GETX() > 2500.0f && jugador->GETX() <= 5000.0f) {
-        limiteDerechoSectorActual = 5000.0f;
-    } else if (jugador->GETX() > 5000.0f && jugador->GETX() <= 7500.0f) {
-        limiteDerechoSectorActual = 7500.0f;
-    } else if (jugador->GETX() > 7500.0f) {
-        limiteDerechoSectorActual = 7800.0f;
-    }
+        const float inicioBossX = 7900.0f;
+        const float finBossX = 9180.0f;
 
-    enemigosEnSectorActual = 0;
-    for (enemigo* en : enemigos) {
-        if (en->GETEstado() != EstadoEnemigo::destruido) {
-            if (en->GETX() <= limiteDerechoSectorActual) {
-                enemigosEnSectorActual++;
+        if (dificultadJuego == 1 && !peleaCamionActiva && jugador->GETX() >= inicioBossX) {
+            peleaCamionActiva = true;
+            if (camionEsmad == nullptr) {
+                camionEsmad = new CamionEsmad(dificultadJuego);
             }
         }
-    }
-    sectorLimpio = (enemigosEnSectorActual == 0);
 
-    // Fin del nivel 1: último sector limpio -> cambio de escena al nivel 2
-    if (sectorLimpio && jugador->GETX() > 7500.0f) {
-        cargarNivel2();
-        update();
-        return;
-    }
-
-    float camaraMaxPermitida = limiteDerechoSectorActual - width();
-    if (camaraMaxPermitida < 0.0f) camaraMaxPermitida = 0.0f;
-
-    if (!sectorLimpio && camaraX > camaraMaxPermitida) {
-        camaraX = camaraMaxPermitida;
-        if (jugador->GETX() > camaraX + width() - 80.0f) {
-            jugador->setX(camaraX + width() - 80.0f);
+        if (dificultadJuego == 1 && peleaCamionActiva && camionEsmad != nullptr) {
+            camionEsmad->actualizar(0.016f, *jugador, proyectiles);
+            if (camionEsmad->consumirCambioDeFase()) {
+                explosionesActivas.append({camionEsmad->GETX(), camionEsmad->GETY() - 60.0f, 0, 0.0f});
+            }
         }
-    }
-} else {
+
+
+        float posEnPantallaX = jugador->GETX() - camaraX;
+        if (posEnPantallaX > 640.0f) {
+            camaraX = jugador->GETX() - 640.0f;
+        } else if (posEnPantallaX < 400.0f && camaraX > 0.0f) {
+            camaraX = jugador->GETX() - 400.0f;
+        }
+
+        float limiteDerechoSectorActual = 2500.0f;
+        if (jugador->GETX() > 2500.0f && jugador->GETX() <= 5000.0f) {
+            limiteDerechoSectorActual = 5000.0f;
+        } else if (jugador->GETX() > 5000.0f && jugador->GETX() <= 7500.0f) {
+            limiteDerechoSectorActual = 7500.0f;
+        } else if (jugador->GETX() > 7500.0f) {
+            limiteDerechoSectorActual = finBossX;
+        }
+
+        enemigosEnSectorActual = 0;
+        for (enemigo* en : enemigos) {
+            if (en->GETEstado() != EstadoEnemigo::destruido) {
+                if (en->GETX() <= limiteDerechoSectorActual) {
+                    enemigosEnSectorActual++;
+                }
+            }
+        }
+        sectorLimpio = (enemigosEnSectorActual == 0);
+
+        if (sectorLimpio && jugador->GETX() >= inicioBossX && !peleaCamionActiva && camionEsmad == nullptr && !camionDerrotadoPendiente) {
+            cargarNivel2();
+            update();
+            return;
+        }
+
+        float camaraMaxPermitida = limiteDerechoSectorActual - width();
+        if (camaraMaxPermitida < 0.0f) camaraMaxPermitida = 0.0f;
+
+        if (!sectorLimpio && camaraX > camaraMaxPermitida) {
+            camaraX = camaraMaxPermitida;
+            if (jugador->GETX() > camaraX + width() - 80.0f) {
+                jugador->setX(camaraX + width() - 80.0f);
+            }
+        }
+        if (dificultadJuego == 1 && peleaCamionActiva) {
+            if (camaraX < inicioBossX) {
+                camaraX = inicioBossX;
+            }
+            if (jugador->GETX() < inicioBossX + 25.0f) {
+                jugador->setX(inicioBossX + 25.0f);
+                if (jugador->GETVx() < 0.0f) {
+                    jugador->setVx(0.0f);
+                }
+            }
+        }
+
+    } else {
     camaraX = 0.0f;           // nivel 2: la pantalla no se desplaza de lado
 
     float posEnPantallaY = jugador->GETY() - camaraY;
@@ -571,6 +655,7 @@ if (nivelActual == 1) {
     }
 }
 
+
     if (camaraX < 0.0f) {
         camaraX = 0.0f;
     }
@@ -578,13 +663,17 @@ if (nivelActual == 1) {
     float margenVisual = 25.0f;
     if (jugador->GETX() < camaraX + margenVisual) {
         jugador->setX(camaraX + margenVisual);
-        jugador->setVelocidadX(0.0f);
+        if (jugador->GETVx() < 0.0f) {
+            jugador->setVx(0.0f);
+        }
     }
     float margenDerecho = 80.0f;
 
     if (jugador->GETX() > camaraX + width() - margenDerecho) {
         jugador->setX(camaraX + width() - margenDerecho);
-        jugador->setVelocidadX(0.0f);
+        if (jugador->GETVx() > 0.0f) {
+            jugador->setVx(0.0f);
+        }
     }
 
     for (enemigo* enemigo : enemigos) {
@@ -607,7 +696,7 @@ if (nivelActual == 1) {
                 float distanciaX = std::abs(deltaX);
                 float distanciaY = std::abs(jugador->GETY() - enemigo->GETY());
 
-                if (jugadorAdelante && distanciaX < 120.0f && distanciaY < 65.0f && enemigo->tiempoDesdeDisparo() < 350) {
+                if (jugadorAdelante && distanciaX < 145.0f && distanciaY < 90.0f) {
                     jugador->recibirDanoJugador(10);
                 }
             }
@@ -664,6 +753,16 @@ if (nivelActual == 1) {
         QRectF hitboxBala(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 8.0f, 4.0f);
 
         if (proyectiles[i]->GETDeJugador()) {
+            if (camionEsmad != nullptr && camionEsmad->GETEstado() != EstadoEnemigo::destruido && hitboxBala.intersects(camionEsmad->GETHitbox())) {
+                if (camionEsmad->recibirDisparo(25)) {
+                    camionDerrotadoPendiente = true;
+                    tiempoTransicionNivel2 = 0.0f;
+                    explosionesActivas.append({camionEsmad->GETX(), camionEsmad->GETY() - 65.0f, 0, 0.0f});
+                }
+                delete proyectiles[i];
+                proyectiles.removeAt(i);
+                continue;
+            }
             if (jefe != nullptr && jefe->GETEstado() != EstadoEnemigo::destruido && hitboxBala.intersects(jefe->GETHitbox())) {
                 if (jefe->recibirDisparo(25)) {
                     victoria = true;
@@ -698,11 +797,16 @@ if (nivelActual == 1) {
         else {
             QRectF hitboxProyectilEnemigo(proyectiles[i]->GETX(), proyectiles[i]->GETY(), 12.0f, 12.0f);
             int origen = proyectiles[i]->GETAtaqueOrigen();
+            bool esSierra = (origen == AtaqueSierras);
+
             if (proyectiles[i]->GETTipoMovimiento() == TipoMovimientoProyectil::Pendulo) {
                 hitboxProyectilEnemigo = QRectF(proyectiles[i]->GETX() - 14.0f, proyectiles[i]->GETY() - 14.0f, 28.0f, 28.0f);
+            } else if (esSierra) {
+                hitboxProyectilEnemigo = QRectF(proyectiles[i]->GETX() - 34.0f, proyectiles[i]->GETY() - 34.0f, 68.0f, 68.0f);
             }
+
             bool colisionConJugador = hitboxProyectilEnemigo.intersects(jugador->GETHitbox());
-            bool tocaSuelo = (proyectiles[i]->GETY() >= 660.0f);
+            bool tocaSuelo = (!esSierra && proyectiles[i]->GETY() >= 660.0f);
 
             bool tocaPlataforma = false;
             for (plataformas* plat : Plataforma) {
@@ -739,6 +843,8 @@ if (nivelActual == 1) {
 
             if (tocaSuelo || tocaPlataforma) {
                 if (origen >= 0 && jefe != nullptr) jefe->aprender(origen, false);
+                else if (origen >= 0 && nivelActual == 1 && camionEsmad != nullptr) camionEsmad->aprender(origen, false);
+
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
                 proyectilEliminado = true;
@@ -755,10 +861,13 @@ if (nivelActual == 1) {
                     if (areaExplosion.intersects(jugador->GETHitbox())) {
                         jugador->recibirDanoJugador(40);
                     }
+                } else if (esSierra) {
+                    jugador->recibirDanoJugador(22);
                 } else {
                     jugador->recibirDanoJugador(origen >= 0 && jefe != nullptr ? jefe->escalarDanio(20) : 20);
                 }
                 if (origen >= 0 && jefe != nullptr) jefe->aprender(origen, true);
+                else if (origen >= 0 && nivelActual == 1 && camionEsmad != nullptr) camionEsmad->aprender(origen, true);
 
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
@@ -835,6 +944,26 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         cargarNivel2();
         return;
     }
+    if (event->key() == Qt::Key_F3) {
+        if (nivelActual != 1) {
+            reiniciarNivel();
+        }
+        jugador->setMaxMunicion(999);
+        jugador->setMunicion(999);
+        jugador->setVida(100);
+        jugador->setX(7950.0f);
+        jugador->setY(660.0f);
+        jugador->setVy(0.0f);
+        jugador->setVelocidadX(0.0f);
+
+        peleaCamionActiva = true;
+        camionDerrotadoPendiente = false;
+        tiempoTransicionNivel2 = 0.0f;
+        if (camionEsmad == nullptr) {
+            camionEsmad = new CamionEsmad(dificultadJuego);
+        }
+        return;
+    }
     // ================ FIN TEMPORAL - BORRAR ANTES DE ENTREGAR ================
 
     if(event->key() == Qt::Key_Space){
@@ -882,6 +1011,19 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event) {
     else if (event->key() == Qt::Key_W || event->key() == Qt::Key_Up) {
         jugador->setApuntandoArriba(false);
     }
+}
+
+static QPixmap aplicarParpadeoRojo(const QPixmap &base, int relojAnim) {
+    if (base.isNull()) return base;
+    if (((relojAnim / 4) % 2) != 0) {
+        return base;
+    }
+    QPixmap resultado = base;
+    QPainter p(&resultado);
+    p.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+    p.fillRect(resultado.rect(), QColor(255, 45, 45, 155));
+    p.end();
+    return resultado;
 }
 
 void MainWindow::paintEvent(QPaintEvent *event) {
@@ -1175,17 +1317,27 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             if ((tipo == TipoEnemigoArma::conservador || tipo == TipoEnemigoArma::liberal) &&
                 (!spriteConservador.isNull() || !spriteLiberal.isNull())) {
                 QPixmap hoja = (tipo == TipoEnemigoArma::conservador) ? spriteConservador : spriteLiberal;
-
                 if (hoja.isNull()) {
                     hoja = !spriteConservador.isNull() ? spriteConservador : spriteLiberal;
                 }
+
                 int xFrame = 4;
-                int yFrame = 6;
+                int yFrame = 24;
                 int wFrame = 72;
                 int hFrame = 104;
                 int centroFrame = 36;
 
-                if (estado == EstadoEnemigo::idle) {
+                if (en->estaEnAnimacionDano()) {
+                    int xsDano[2] = {565, 635};
+                    int wsDano[2] = {62, 62};
+                    int centrosDano[2] = {32, 32};
+                    int idx = (relojAnim / 5) % 2;
+                    xFrame = xsDano[idx];
+                    wFrame = wsDano[idx];
+                    centroFrame = centrosDano[idx];
+                    yFrame = 152;
+                    hFrame = 104;
+                } else if (estado == EstadoEnemigo::idle) {
                     int xsIdle[4] = {2, 77, 132, 194};
                     int wsIdle[4] = {46, 51, 60, 60};
                     int centrosIdle[4] = {22, 27, 35, 38};
@@ -1195,7 +1347,6 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     centroFrame = centrosIdle[idx];
                     yFrame = 24;
                     hFrame = 104;
-
                 } else if (estado == EstadoEnemigo::alerta) {
                     int xsAlerta[2] = {258, 365};
                     int wsAlerta[2] = {74, 64};
@@ -1206,25 +1357,30 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     centroFrame = centrosAlerta[idx];
                     yFrame = 24;
                     hFrame = 104;
-
                 } else if (estado == EstadoEnemigo::disparando) {
                     int xsAtaque[3] = {10, 96, 162};
                     int wsAtaque[3] = {69, 64, 94};
                     int centrosAtaque[3] = {43, 35, 61};
-                    int idx = (relojAnim / 9) % 3;
+                    long long tDisp = en->tiempoDesdeDisparo();
+                    int idx = 0;
+                    if (tDisp < 220 || tDisp > 920) idx = 2;
+                    else if (tDisp < 450 || tDisp > 720) idx = 1;
+                    else idx = 0;
                     xFrame = xsAtaque[idx];
                     wFrame = wsAtaque[idx];
                     centroFrame = centrosAtaque[idx];
                     yFrame = 152;
                     hFrame = 104;
                 }
-
-                if (xFrame + wFrame <= hoja.width() && yFrame + hFrame <= hoja.height()) {
+                if (xFrame >= 0 && yFrame >= 0 && xFrame + wFrame <= hoja.width() && yFrame + hFrame <= hoja.height()) {
                     QPixmap recorte = hoja.copy(xFrame, yFrame, wFrame, hFrame);
                     float escalaEnemigo = 1.25f;
                     int altoDibujo = qRound(104 * escalaEnemigo);
                     int anchoDibujo = qRound((static_cast<float>(wFrame) / hFrame) * altoDibujo);
                     QPixmap escalado = recorte.scaled(anchoDibujo, altoDibujo, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    if (en->estaEnAnimacionDano()) {
+                        escalado = aplicarParpadeoRojo(escalado, relojAnim);
+                    }
 
                     int centroDibujo = qRound(centroFrame * (static_cast<float>(escalado.height()) / hFrame));
                     if (!mirarIzquierda) centroDibujo = escalado.width() - centroDibujo;
@@ -1248,6 +1404,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 bool estaDisparando = (estado == EstadoEnemigo::disparando);
                 bool mostrandoFuego = estaDisparando && en->estaLanzandoLlama();
 
+                int wHoja = spriteLanzallamas.width();
+                int hHoja = spriteLanzallamas.height();
+
                 static const int xsFila0[4] = {26, 181, 335, 485};
                 static const int wsFila0[4] = {153, 153, 149, 131};
                 static const int centrosFila0[4] = {57, 57, 58, 59};
@@ -1255,40 +1414,62 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 static const int wsFila1[7] = {155, 159, 158, 156, 157, 149, 157};
                 static const int centrosFila1[7] = {58, 60, 60, 60, 60, 60, 60};
                 static const int piesFila1[7] = {411, 408, 407, 405, 400, 400, 399};
+                static const int xsFila2[2] = {20, 185};
+                static const int wsFila2[2] = {155, 160};
+                static const int centrosFila2[2] = {60, 62};
 
-                int fila = estaDisparando ? 1 : 0;
-                int col = 0;
+                int hRec = 188;
+                int xRec = 26;
+                int wRec = 153;
+                int yRec = 206 - hRec;
+                int centroRec = 57;
+                int extraOffsetY = 14;
 
-                if (estaDisparando) {
+                if (en->estaEnAnimacionDano()) {
+                    int idxDano = (relojAnim / 5) % 2;
+                    xRec = xsFila2[idxDano];
+                    wRec = wsFila2[idxDano];
+                    centroRec = centrosFila2[idxDano];
+                    hRec = qMin(165, hHoja / 4);
+                    yRec = qMax(0, hHoja - hRec);
+                    extraOffsetY = 24;
+                    mostrandoFuego = false;
+                } else if (estaDisparando) {
                     int cuadrosDisparo = 6;
                     int velDisparo = 11;
-                    col = 1 + ((relojAnim / velDisparo) % cuadrosDisparo);
+                    int col = 1 + ((relojAnim / velDisparo) % cuadrosDisparo);
+                    xRec = xsFila1[col];
+                    wRec = wsFila1[col];
+                    yRec = piesFila1[col] - hRec;
+                    centroRec = centrosFila1[col];
                 } else {
                     int cuadrosIdle = 4;
                     int velIdle = (estado == EstadoEnemigo::alerta) ? 15 : 22;
-                    col = (relojAnim / velIdle) % cuadrosIdle;
+                    int col = (relojAnim / velIdle) % cuadrosIdle;
+                    xRec = xsFila0[col];
+                    wRec = wsFila0[col];
+                    yRec = 206 - hRec;
+                    centroRec = centrosFila0[col];
                 }
-
-                int hRec = 188;
-                int xRec = (fila == 1) ? xsFila1[col] : xsFila0[col];
-                int wRec = (fila == 1) ? wsFila1[col] : wsFila0[col];
-                int yRec = ((fila == 1) ? piesFila1[col] : 206) - hRec;
-                int centroRec = (fila == 1) ? centrosFila1[col] : centrosFila0[col];
 
                 if (xRec < 0) xRec = 0;
                 if (yRec < 0) yRec = 0;
-                if (xRec + wRec > spriteLanzallamas.width()) wRec = spriteLanzallamas.width() - xRec;
-                if (yRec + hRec > spriteLanzallamas.height()) hRec = spriteLanzallamas.height() - yRec;
+                if (xRec + wRec > wHoja) wRec = qMax(1, wHoja - xRec);
+                if (yRec + hRec > hHoja) hRec = qMax(1, hHoja - yRec);
 
                 QPixmap recorteSoldado = spriteLanzallamas.copy(xRec, yRec, wRec, hRec);
 
                 float escalaLanzallamas = 1.25f;
                 int altoSoldado = qRound(104 * escalaLanzallamas);
                 QPixmap pixSoldado = recorteSoldado.scaledToHeight(altoSoldado, Qt::SmoothTransformation);
-                int centroSoldado = qRound(centroRec * (static_cast<float>(pixSoldado.height()) / hRec));
+                if (en->estaEnAnimacionDano()) {
+                    pixSoldado = aplicarParpadeoRojo(pixSoldado, relojAnim);
+                }
+
+                int centroSoldado = qRound(centroRec * (static_cast<float>(pixSoldado.height()) / qMax(1, hRec)));
                 if (mirarIzquierda) centroSoldado = pixSoldado.width() - centroSoldado;
                 int cuerpoX = xPantalla + qRound(22 * escalaLanzallamas) - centroSoldado;
-                int cuerpoY = static_cast<int>(en->GETY()) - pixSoldado.height() + 14;
+                int cuerpoY = static_cast<int>(en->GETY()) - pixSoldado.height() + extraOffsetY;
 
                 painter.save();
                 if (mirarIzquierda) {
@@ -1317,7 +1498,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     int altoLlama = qRound(68 * escalaLanzallamas);
                     QPixmap llamaEscalada = recorteLlama.scaledToHeight(altoLlama, Qt::SmoothTransformation);
 
-                    int bocaY = cuerpoY + qRound(pixSoldado.height() * 0.56f) - (llamaEscalada.height() / 2)+7;
+                    int bocaY = cuerpoY + qRound(pixSoldado.height() * 0.56f) - (llamaEscalada.height() / 2) + 7;
 
                     painter.save();
                     if (mirarIzquierda) {
@@ -1344,24 +1525,56 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
                 int fila = 0;
                 int col = 0;
+                int yRec = 0;
+                int hRec = hCelda;
+                int extraOffsetY = 16;
 
-                if (estado == EstadoEnemigo::disparando) {
-                    fila = 1;
-                    col = (relojAnim / 7) % colsTotal;
-                } else if (estado == EstadoEnemigo::alerta) {
-                    fila = 0;
-                    col = (relojAnim / 8) % colsTotal;
+                if (en->estaEnAnimacionDano()) {
+                    fila = 2;
+                    col = (relojAnim / 5) % 2;
+                    hRec = qMax(1, hCelda - 18);
+                    yRec = fila * hCelda + 12;
+                    extraOffsetY = 24;
                 } else {
-                    fila = 0;
-                    col = ((relojAnim / 45) % 2 == 0) ? 0 : 2;
+                    yRec = fila * hCelda;
+                    if (estado == EstadoEnemigo::disparando) {
+                        long long tDisp = en->tiempoDesdeDisparo();
+                        if (tDisp < 220) {
+                            fila = 1;
+                            col = 2 + static_cast<int>((tDisp / 75) % 2);
+                        } else if (tDisp > 1050) {
+                            fila = 1;
+                            col = 1 + static_cast<int>(((tDisp - 1050) / 115) % 3);
+                        } else {
+                            fila = 0;
+                            col = 2;
+                        }
+                        yRec = fila * hCelda;
+                    } else if (estado == EstadoEnemigo::alerta) {
+                        fila = 0;
+                        yRec = fila * hCelda;
+                        col = (relojAnim / 8) % colsTotal;
+                    } else {
+                        fila = 0;
+                        yRec = fila * hCelda;
+                        col = ((relojAnim / 45) % 2 == 0) ? 0 : 2;
+                    }
                 }
 
-                QPixmap cuadroPistolero = spritePistolero.copy(col * wCelda, fila * hCelda, wCelda, hCelda).scaledToHeight(124, Qt::SmoothTransformation);
+                int xRec = col * wCelda;
+                if (xRec + wCelda > spritePistolero.width()) xRec = qMax(0, spritePistolero.width() - wCelda);
+                if (yRec + hRec > spritePistolero.height()) hRec = qMax(1, spritePistolero.height() - yRec);
+
+                QPixmap cuadroPistolero = spritePistolero.copy(xRec, yRec, wCelda, hRec).scaledToHeight(124, Qt::SmoothTransformation);
+                if (en->estaEnAnimacionDano()) {
+                    cuadroPistolero = aplicarParpadeoRojo(cuadroPistolero, relojAnim);
+                }
+
                 int wDib = cuadroPistolero.width();
                 int hDib = cuadroPistolero.height();
 
                 int dibX = xPantalla - (wDib / 2);
-                int dibY = static_cast<int>(en->GETY()) - hDib + 16;
+                int dibY = static_cast<int>(en->GETY()) - hDib + extraOffsetY;
 
                 painter.save();
                 if (mirarIzquierda) {
@@ -1374,32 +1587,88 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 painter.restore();
 
             } else if (tipo == TipoEnemigoArma::lanzagranadas && !spriteGranadero.isNull()) {
-                const int colsTotal = 8;
-                const int filasTotal = 3;
-                int wCelda = spriteGranadero.width() / colsTotal;
-                int hCelda = spriteGranadero.height() / filasTotal;
+                int wImg = spriteGranadero.width();
+                int hImg = spriteGranadero.height();
 
-                int fila = 0;
-                int col = (relojAnim / 14) % 4;
+                float xNorm = 0.020f;
+                float wNorm = 0.105f;
+                float yNorm = 0.02f;
+                float hNorm = 0.28f;
+                int extraOffsetY = 12;
 
-                if (estado == EstadoEnemigo::alerta) {
-                    fila = 1;
-                    col = (relojAnim / 12) % 3;
+                if (en->estaEnAnimacionDano()) {
+                    static const float xsDano[2] = {0.012f, 0.125f};
+                    static const float wsDano[2] = {0.115f, 0.135f};
+                    int idxDano = (relojAnim / 6) % 2;
+                    xNorm = xsDano[idxDano];
+                    wNorm = wsDano[idxDano];
+                    yNorm = 0.68f;
+                    hNorm = 0.29f;
+                    extraOffsetY = 20;
                 } else if (estado == EstadoEnemigo::disparando) {
-                    fila = 1;
+                    static const float xsFila1[8] = {
+                        0.012f, 0.118f, 0.224f, 0.330f,
+                        0.436f, 0.542f, 0.648f, 0.754f
+                    };
+                    static const float wsFila1[8] = {
+                        0.102f, 0.102f, 0.102f, 0.102f,
+                        0.104f, 0.104f, 0.102f, 0.102f
+                    };
+
                     long long t = en->tiempoDesdeDisparo();
-                    if (t < 250) col = 3;
-                    else if (t < 500) col = 4;
-                    else if (t < 750) col = 5;
-                    else col = 6;
+                    int idx = 3;
+                    if (t < 140) {
+                        idx = 2;
+                    } else if (t < 280) {
+                        idx = 3;
+                    } else if (t < 460) {
+                        idx = 4;
+                    } else if (t < 650) {
+                        idx = 5;
+                    } else if (t < 850) {
+                        idx = 6;
+                    } else {
+                        idx = 7;
+                    }
+
+                    xNorm = xsFila1[idx];
+                    wNorm = wsFila1[idx];
+                    yNorm = 0.34f;
+                    hNorm = 0.32f;
+                } else if (estado == EstadoEnemigo::alerta) {
+                    xNorm = 0.012f;
+                    wNorm = 0.102f;
+                    yNorm = 0.34f;
+                    hNorm = 0.32f;
+                } else {
+                    static const float xsIdle[2] = {0.020f, 0.125f};
+                    int idxIdle = (relojAnim / 30) % 2;
+                    xNorm = xsIdle[idxIdle];
+                    wNorm = 0.105f;
+                    yNorm = 0.02f;
+                    hNorm = 0.28f;
                 }
 
-                QPixmap cuadroGranadero = spriteGranadero.copy(col * wCelda, fila * hCelda, wCelda, hCelda).scaledToHeight(118, Qt::SmoothTransformation);
+                int xFrame = qRound(xNorm * wImg);
+                int yFrame = qRound(yNorm * hImg);
+                int wFrame = qMax(1, qRound(wNorm * wImg));
+                int hFrame = qMax(1, qRound(hNorm * hImg));
+
+                if (xFrame < 0) xFrame = 0;
+                if (yFrame < 0) yFrame = 0;
+                if (xFrame + wFrame > wImg) wFrame = qMax(1, wImg - xFrame);
+                if (yFrame + hFrame > hImg) hFrame = qMax(1, hImg - yFrame);
+
+                QPixmap cuadroGranadero = spriteGranadero.copy(xFrame, yFrame, wFrame, hFrame).scaledToHeight(116, Qt::SmoothTransformation);
+
+                if (en->estaEnAnimacionDano()) {
+                    cuadroGranadero = aplicarParpadeoRojo(cuadroGranadero, relojAnim);
+                }
+
                 int wDib = cuadroGranadero.width();
                 int hDib = cuadroGranadero.height();
-
-                int dibX = xPantalla - (wDib / 2);
-                int dibY = static_cast<int>(en->GETY()) - hDib + 14;
+                int dibX = xPantalla - (wDib / 2) + 20;
+                int dibY = static_cast<int>(en->GETY()) - hDib + extraOffsetY;
 
                 painter.save();
                 if (mirarIzquierda) {
@@ -1410,16 +1679,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                     painter.drawPixmap(dibX, dibY, cuadroGranadero);
                 }
                 painter.restore();
-
-            } else if (tipo == TipoEnemigoArma::esmadpistolon) {
-                painter.fillRect(xPantalla, yPantalla, 40, 100, QColor(70, 130, 180));
-            } else if (tipo == TipoEnemigoArma::lanzallamas) {
-                painter.fillRect(xPantalla, yPantalla, 45, 100, QColor(210, 105, 30));
-            } else if (tipo == TipoEnemigoArma::lanzagranadas) {
-                painter.fillRect(xPantalla, yPantalla, 45, 100, QColor(85, 107, 47));
             }
-
-
             if (en->MostrarLaAlerta()) {
                 QFont fuenteAlerta("Arial", 50, QFont::Bold);
                 painter.setFont(fuenteAlerta);
@@ -1430,10 +1690,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
                 painter.drawText(centroEnemigoX - 10, alturaAlertaY, "!");
             }
         }
-
     }
-        painter.restore();
-
     painter.setPen(Qt::white);
     QFont fuenteHud("Arial", 14, QFont::Bold);
     painter.setFont(fuenteHud);
@@ -1460,6 +1717,17 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         painter.drawRect(barraX, 38, static_cast<int>(anchoBarra * porcentajeJefe), 16);
     }
 
+    if (nivelActual == 1 && peleaCamionActiva && camionEsmad != nullptr) {
+        int anchoBarra = 500;
+        int barraX = (width() - anchoBarra) / 2;
+        painter.setPen(Qt::white);
+        painter.drawText(barraX, 30, camionEsmad->enFase2() ? "CAMIÓN ESMAD - FURIA" : "CAMIÓN ESMAD");
+        painter.setBrush(Qt::darkGray);
+        painter.drawRect(barraX, 38, anchoBarra, 16);
+        float porcentajeCamion = qMax(0.0f, static_cast<float>(camionEsmad->GETVida()) / camionEsmad->GETVidaMaxima());
+        painter.setBrush(camionEsmad->enFase2() ? QColor(210, 45, 35) : QColor(65, 115, 185));
+        painter.drawRect(barraX, 38, static_cast<int>(anchoBarra * porcentajeCamion), 16);
+    }
     painter.save();
     painter.translate(0, -camaraY);
 
@@ -1477,9 +1745,34 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         painter.setPen(QPen(QColor(255, 200, 60), 3));
         painter.setBrush(QColor(255, 120, 20));
         painter.drawEllipse(QPointF(projPantallaX, projPantallaY), 14, 14);
-        }else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico && !spriteGranada.isNull()) {
-            int giro = (relojAnim / 4) % 4;                     // la granada da vueltas en el aire
-            painter.drawPixmap(projPantallaX - 8, projPantallaY - 8, spriteGranada.copy(giro * 16, 0, 16, 16));
+        } else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico && !spriteGranada.isNull()) {
+            int giro = (relojAnim / 4) % 4;
+            int wCuadro = spriteGranada.width() / 4;
+            int hCuadro = spriteGranada.height();
+            QPixmap cuadroGranada = spriteGranada.copy(giro * wCuadro, 0, wCuadro, hCuadro).scaled(34, 34, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            painter.drawPixmap(projPantallaX - cuadroGranada.width() / 2, projPantallaY - cuadroGranada.height() / 2, cuadroGranada);
+        } else if (!p->GETDeJugador() && p->GETAtaqueOrigen() == AtaqueSierras) {
+            painter.save();
+            painter.translate(projPantallaX, projPantallaY);
+            painter.rotate((relojAnim * 24) % 360);
+            if (!spriteSierra.isNull()) {
+                int ladoBase = qMin(spriteSierra.width(), spriteSierra.height());
+                int xCrop = (spriteSierra.width() - ladoBase) / 2;
+                int yCrop = (spriteSierra.height() - ladoBase) / 2;
+                QPixmap sierraCuadrada = spriteSierra.copy(xCrop, yCrop, ladoBase, ladoBase);
+                QPixmap sierraEscalada = sierraCuadrada.scaled(130, 130, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                painter.drawPixmap(-sierraEscalada.width() / 2, -sierraEscalada.height() / 2, sierraEscalada);
+            } else {
+                painter.setPen(QPen(QColor(235, 242, 250), 3));
+                painter.setBrush(QColor(150, 165, 180));
+                painter.drawEllipse(-65, -65, 130, 130);
+                painter.drawLine(-72, 0, 72, 0);
+                painter.drawLine(0, -72, 0, 72);
+                painter.drawLine(-50, -50, 50, 50);
+                painter.drawLine(-50, 50, 50, -50);
+            }
+            painter.restore();
+
         } else {
             painter.setBrush(Qt::yellow);
             painter.setPen(QPen(QColor(255, 140, 0), 2));
@@ -1590,9 +1883,142 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             painter.drawLine(ojos, jefe->GETFinLaser());
             painter.setPen(QPen(QColor(255, 240, 240), 4));
             painter.drawLine(ojos, jefe->GETFinLaser());
+        }    // fin del mundo
+    }
+    if (nivelActual == 1 && peleaCamionActiva && camionEsmad != nullptr && camionEsmad->GETEstado() != EstadoEnemigo::destruido) {
+        QRectF hbCamion = camionEsmad->GETHitbox();
+        int xCamion = static_cast<int>(hbCamion.x() - camaraX);
+        int yCamion = static_cast<int>(hbCamion.y());
+        int wCamion = static_cast<int>(hbCamion.width());
+        int hCamion = static_cast<int>(hbCamion.height());
+
+        bool enFase2 = camionEsmad->enFase2();
+        float vibY = std::sin(relojAnim * (enFase2 ? 0.52f : 0.20f)) * (enFase2 ? 2.8f : 0.8f);
+        bool disparandoAhora = (camionEsmad->GETTiempoFogonazo() > 0.0f);
+        float retrocesoCanon = disparandoAhora ? 5.0f : 0.0f;
+
+        int altoSpriteCamion = hCamion + 24;
+        int anchoSpriteCamion = wCamion + 20;
+        int offsetPisoCamion = 14;
+        int xDib = xCamion - 10 + qRound(retrocesoCanon);
+        int yDib = yCamion - 10 + offsetPisoCamion + qRound(vibY);
+        float tSeg = relojAnim * 0.016f;
+
+        float ySueloCamion = yCamion + hCamion + offsetPisoCamion;
+        painter.save();
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(0, 0, 0, 125));
+        painter.drawEllipse(QRectF(xCamion + 4.0f, ySueloCamion - 8.0f, wCamion - 8.0f, 16.0f));
+        painter.restore();
+        painter.save();
+        painter.setPen(Qt::NoPen);
+        static const float centrosLlantasX[2] = {0.36f, 0.78f};
+        float baseLlantasY = ySueloCamion - 9.0f;
+
+        for (int r = 0; r < 2; ++r) {
+            float lxBase = xCamion + wCamion * centrosLlantasX[r];
+            for (int k = 0; k < 4; ++k) {
+                float fase = std::fmod(tSeg * 1.35f + r * 0.37f + k * 0.25f, 1.0f);
+                float hx = lxBase - fase * (24.0f + k * 6.0f) + std::sin(fase * 6.28318f + r + k) * 4.0f;
+                float hy = baseLlantasY - fase * (20.0f + k * 4.0f);
+                float radio = (9.0f + k * 3.0f) + fase * 8.5f;
+                int alfa = qRound((1.0f - fase) * (enFase2 ? 175.0f : 145.0f));
+                if (alfa > 0) {
+                    painter.setBrush(QColor(enFase2 ? 95 : 155, enFase2 ? 85 : 160, enFase2 ? 85 : 168, alfa));
+                    painter.drawEllipse(QPointF(hx, hy), radio * 1.4f, radio * 0.9f);
+                }
+            }
+        }
+        painter.restore();
+
+        if (!spriteCamionEsmad.isNull()) {
+            QPixmap pixCamion = spriteCamionEsmad.scaled(anchoSpriteCamion, altoSpriteCamion, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+            if (camionEsmad->GETDestello() > 0.0f) {
+                QPainter pImpacto(&pixCamion);
+                pImpacto.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+                pImpacto.fillRect(pixCamion.rect(), QColor(255, 255, 255, 165));
+                pImpacto.end();
+            }
+
+            if (enFase2 && ((relojAnim / 5) % 2 == 0)) {
+                QPainter pFase2(&pixCamion);
+                pFase2.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+                pFase2.fillRect(pixCamion.rect(), QColor(255, 45, 45, 145));
+                pFase2.end();
+            }
+
+            painter.drawPixmap(xDib, yDib, pixCamion);
+        } else {
+            QColor colorBlindaje = enFase2 ? QColor(135, 35, 35) : QColor(45, 65, 95);
+            if (camionEsmad->GETDestello() > 0.0f) colorBlindaje = QColor(245, 245, 245);
+
+            painter.setPen(QPen(Qt::black, 2));
+            painter.setBrush(colorBlindaje);
+            painter.drawRect(xCamion, yCamion + 25 + offsetPisoCamion, wCamion, hCamion - 25);
+
+            painter.setBrush(enFase2 ? QColor(170, 50, 40) : QColor(65, 90, 125));
+            painter.drawRect(xCamion + 12, yCamion + offsetPisoCamion, 75, 45);
+
+            painter.setBrush(QColor(30, 30, 30));
+            painter.drawEllipse(xCamion + 32, yCamion + hCamion - 28 + offsetPisoCamion, 34, 34);
+            painter.drawEllipse(xCamion + wCamion - 64, yCamion + hCamion - 28 + offsetPisoCamion, 34, 34);
+        }
+
+        float periodoBerrinche = 3.2f;
+        float duracionBerrinche = 1.25f;
+        float posCiclo = std::fmod(tSeg, periodoBerrinche);
+        if (enFase2 && posCiclo <= duracionBerrinche) {
+            float prog = posCiclo / duracionBerrinche;
+            float envolvente = std::sin(prog * 3.14159265f);
+
+            struct ChorrosIra {
+                float ox, oy;
+                float dx, dy;
+                float faseOff;
+                float radio;
+            };
+            static const ChorrosIra chorros[4] = {
+                {0.22f, 0.72f, -22.0f, -26.0f, 0.00f, 12.0f},
+                {0.48f, 0.45f,  10.0f, -34.0f, 0.28f, 14.0f},
+                {0.72f, 0.52f, -18.0f, -30.0f, 0.57f, 15.0f},
+                {0.88f, 0.25f,  20.0f, -36.0f, 0.81f, 13.0f}
+            };
+
+            painter.save();
+            painter.setPen(Qt::NoPen);
+            for (int c = 0; c < 4; ++c) {
+                const ChorrosIra &ch = chorros[c];
+                float irregular = 0.6f + 0.4f * std::sin(tSeg * (6.5f + c * 2.1f) + ch.faseOff * 6.28318f);
+                for (int n = 0; n < 3; ++n) {
+                    float f = std::fmod(prog * 1.9f + ch.faseOff + n * 0.33f, 1.0f);
+                    float px = xCamion + wCamion * ch.ox + f * ch.dx + std::sin(f * 8.0f + c + n) * 5.0f;
+                    float py = yCamion + hCamion * ch.oy + offsetPisoCamion + f * ch.dy + qRound(vibY);
+                    float rad = (ch.radio + n * 4.0f + f * 12.0f) * irregular;
+                    int alfa = qRound((1.0f - f) * envolvente * 165.0f);
+                    if (alfa > 0) {
+                        painter.setBrush(QColor(55, 42, 42, alfa));
+                        painter.drawEllipse(QPointF(px, py), rad * 1.35f, rad * 0.85f);
+                    }
+                }
+            }
+            painter.restore();
+        }
+
+        if (disparandoAhora) {
+            QPointF canonMundo = camionEsmad->GETCanonPos();
+            int bocaX = static_cast<int>(canonMundo.x() - camaraX) + qRound(retrocesoCanon);
+            int bocaY = static_cast<int>(canonMundo.y()) + qRound(vibY);
+            painter.save();
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QColor(255, 195, 50, 200));
+            painter.drawEllipse(QPointF(bocaX - 8, bocaY), 12, 7);
+            painter.setBrush(QColor(255, 250, 200, 235));
+            painter.drawEllipse(QPointF(bocaX - 4, bocaY), 6, 4);
+            painter.restore();
         }
     }
-    painter.restore();            // fin del mundo
+
 
     if (sectorLimpio) {
         contadorFramesGO++;
@@ -1610,7 +2036,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         contadorFramesGO = 0;
     }
 
-
+    painter.restore();
 
     if (juegoTerminado) {
         painter.setBrush(Qt::black);

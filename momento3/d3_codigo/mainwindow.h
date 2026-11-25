@@ -9,6 +9,7 @@
 #include "proyectil.h"
 #include "plataformas.h"
 #include "jefegaitan.h"
+#include "camionesmad.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -69,8 +70,9 @@ private:
     QPixmap spriteFuego;
     QPixmap spritePistolero;
     QPixmap spriteGranadero;
-    QPixmap spriteCarro;
     QPixmap spriteGranada;
+    QPixmap spriteCamionEsmad;
+    QPixmap spriteSierra;
     QList<CuraSuelo> curasEnMapa;
     QList<enemigo*> enemigos;
     QList<QPair<enemigo*, plataformas*>> enemigosEnNube;
@@ -95,5 +97,9 @@ private:
     bool enSeleccionDificultad;
     int dificultadJuego;
     int contadorFramesGO;
+    CamionEsmad *camionEsmad;
+    bool peleaCamionActiva;
+    bool camionDerrotadoPendiente;
+    float tiempoTransicionNivel2;
 };
 #endif // MAINWINDOW_H

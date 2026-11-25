@@ -23,6 +23,9 @@ private:
     bool MostrarAlerta;
     QElapsedTimer temporizadoralerta;
     TipoEnemigoArma TipoEnemigo ;
+    bool animacionDano;
+    QElapsedTimer temporizadorDano;
+    float Stagger;
 
 public:
     enemigo();
@@ -44,6 +47,7 @@ public:
     bool estaLanzandoLlama() const;
     long long tiempoDesdeDisparo() const;
     void setRangoVisionY(float nuevoRango);
+    bool estaEnAnimacionDano() const;
 
 };
 
