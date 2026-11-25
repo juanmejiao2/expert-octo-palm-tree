@@ -35,27 +35,27 @@ JefeGaitan::JefeGaitan(int dificultad)
 
 void JefeGaitan::configurarDificultad(int dificultad) {
     if (dificultad == 0) {
-        tasaAprendizaje = 0.15f;
-        exploracion = 0.35f;
+        tasaAprendizaje = 0.10f;
+        exploracion = 0.40f;
         usaPrediccion = false;
-        cadenciaBase = 2.6f;
-        giroLaser = 0.9f;
-        duracionLaser = 2.0f;
+        cadenciaBase = 3.4f;
+        giroLaser = 0.3f;
+        duracionLaser = 1.4f;
+        factorDanio = 0.4f;
+        cantidadPendulos = 1;
+        cantidadLluvia = 3;
+        vidaMaxima = 250;
+    } else {
+        tasaAprendizaje = 0.25f;
+        exploracion = 0.20f;
+        usaPrediccion = true;
+        cadenciaBase = 2.4f;
+        giroLaser = 0.5f;
+        duracionLaser = 1.8f;
         factorDanio = 0.7f;
         cantidadPendulos = 2;
         cantidadLluvia = 4;
-        vidaMaxima = 600;
-    } else {
-        tasaAprendizaje = 0.35f;
-        exploracion = 0.12f;
-        usaPrediccion = true;
-        cadenciaBase = 1.7f;
-        giroLaser = 1.8f;
-        duracionLaser = 2.4f;
-        factorDanio = 1.2f;
-        cantidadPendulos = 3;
-        cantidadLluvia = 6;
-        vidaMaxima = 1000;
+        vidaMaxima = 450;
     }
     vida = vidaMaxima;
 }
@@ -115,7 +115,7 @@ void JefeGaitan::actuar(AtaqueGaitan ataque, QList<Proyectil*> &proyectiles) {
     int extra = fase2 ? 1 : 0;
     if (ataque == AtaqueLaser) {
         faseLaser = 1;
-        tiempoLaser = 0.6f;
+        tiempoLaser = 0.9f;
         laserGolpeo = false;
         acumuladoLaser = 0.0f;
         QPointF ojos = GETOjos();
@@ -169,15 +169,14 @@ void JefeGaitan::actualizar(float dt, const jugador &j, QList<Proyectil*> &proye
         QPointF ojos = GETOjos();
         float objetivo = std::atan2(yJugador - static_cast<float>(ojos.y()), puntoObjetivoX(0.4f) - static_cast<float>(ojos.x()));
         float diferencia = std::remainder(objetivo - anguloLaser, 6.2831853f);
-        float paso = giroLaser * dt;
-        if (diferencia > paso) diferencia = paso;
+        float paso = (faseLaser == 2) ? giroLaser * dt : 0.0f;  // en el aviso el rayo queda quieto
         if (diferencia < -paso) diferencia = -paso;
         anguloLaser += diferencia;
         tiempoLaser -= dt;
         if (tiempoLaser <= 0.0f) {
             if (faseLaser == 1) {
                 faseLaser = 2;
-                tiempoLaser = duracionLaser + (fase2 ? 1.0f : 0.0f);
+                tiempoLaser = duracionLaser + (fase2 ? 0.5f : 0.0f);
             } else {
                 faseLaser = 0;
                 aprender(AtaqueLaser, laserGolpeo);
@@ -190,7 +189,7 @@ void JefeGaitan::actualizar(float dt, const jugador &j, QList<Proyectil*> &proye
     if (cooldownAtaque <= 0.0f) {
         actuar(razonar(), proyectiles);
         ataquesDesdeTeleport++;
-        cooldownAtaque = cadenciaBase * (fase2 ? 0.65f : 1.0f);
+        cooldownAtaque = cadenciaBase * (fase2 ? 0.8f : 1.0f);
         if (ataquesDesdeTeleport >= 2 && faseLaser == 0) teletransportar();
     }
 }
@@ -273,9 +272,9 @@ int JefeGaitan::aplicarLaser(const QRectF &hitboxJugador, float dt) {
     }
     laserGolpeo = true;
     acumuladoLaser += dt;
-    if (acumuladoLaser >= 0.25f) {
-        acumuladoLaser -= 0.25f;
-        return escalarDanio(8);
+    if (acumuladoLaser >= 0.3f) {
+        acumuladoLaser -= 0.3f;
+        return escalarDanio(6);
     }
     return 0;
 }

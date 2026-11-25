@@ -551,6 +551,9 @@ if (nivelActual == 1) {
     if (!peleaActiva && jugador->GETY() < -2200.0f) {
         jefe = new JefeGaitan(dificultadJuego);
         peleaActiva = true;
+        balasEnMapa.append({420.0f, -2310.0f, false});    // munición en la arena
+        balasEnMapa.append({860.0f, -2310.0f, false});
+        recargaMunicion = 0.0f;
     }
     if (peleaActiva) {
         camaraY = -2880.0f;
@@ -559,6 +562,11 @@ if (nivelActual == 1) {
             jugador->setY(-2302.0f);
             jugador->setVy(0.0f);
             jugador->recibirDanoJugador(10);
+            recargaMunicion += 0.016f;
+            if (recargaMunicion >= 8.0f) {
+                recargaMunicion = 0.0f;
+                for (BalaSuelo &caja : balasEnMapa) caja.recolectada = false;
+            }
         }
         jefe->actualizar(0.016f, *jugador, proyectiles);
         int danioLaser = jefe->aplicarLaser(jugador->GETHitbox(), 0.016f);
