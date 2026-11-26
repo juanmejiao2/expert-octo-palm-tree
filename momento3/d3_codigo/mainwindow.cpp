@@ -100,6 +100,10 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         spriteLanzallamas= Lanzallamas;
     }
     jugador = nullptr;
+    if (!spriteGaitan.load("gaitan.png"))          qWarning("No se encontró gaitan.png");
+    if (!spriteNube.load("nube.png"))              qWarning("No se encontró nube.png");
+    if (!fondoCieloMedio.load("cielo_medio.png"))  qWarning("No se encontró cielo_medio.png");
+    if (!fondoCieloFinal.load("cielo_final.png"))  qWarning("No se encontró cielo_final.png");
 
     QPixmap fondolvl1("BG_lvl1.jpg");
     if (!fondolvl1.isNull()) {
@@ -367,6 +371,30 @@ void MainWindow::cargarNivel2() {
         ponerEnemigo(16, 100.0f, TipoEnemigoArma::liberal, vidaCrook);
         ponerEnemigo(18, 100.0f, TipoEnemigoArma::esmadpistolon, vidaCrook);
     }
+}
+// Devuelve la nube del ancho pedido. La primera vez la escala y la guarda; después solo la busca.
+// Las plataformas angostas usan una nube; la arena (muy ancha) encadena varias para que no se vea aplastada.
+const QPixmap &MainWindow::nubeParaAncho(int ancho) {
+    auto it = cacheNubes.constFind(ancho);
+    if (it != cacheNubes.constEnd()) return it.value();
+
+    const float proporcion = 286.0f / 591.0f;
+    QPixmap resultado;
+    if (ancho <= 320) {
+        resultado = spriteNube.scaled(ancho, qRound(ancho * proporcion), Qt::IgnoreAspectRatio, Qt::FastTransformation);
+    } else {
+        int piezas = qMax(2, qRound(ancho / 210.0f));
+        int anchoPieza = qRound(ancho / (piezas * 0.8f + 0.2f));
+        QPixmap pieza = spriteNube.scaled(anchoPieza, qRound(anchoPieza * proporcion), Qt::IgnoreAspectRatio, Qt::FastTransformation);
+        QPixmap piezaVolteada = pieza.transformed(QTransform().scale(-1, 1));
+        resultado = QPixmap(ancho, pieza.height());
+        resultado.fill(Qt::transparent);
+        QPainter p(&resultado);
+        for (int i = 0; i < piezas; ++i) {
+            p.drawPixmap(qRound(i * anchoPieza * 0.8f), 0, (i % 2 == 0) ? pieza : piezaVolteada);
+        }
+    }
+    return cacheNubes.insert(ancho, resultado).value();
 }
 
 void MainWindow::borrarJefe() {
@@ -1158,11 +1186,17 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
 
     if (nivelActual == 2) {
-        // cielo provisional: se aclara a medida que se sube (luego va la imagen de fondo)
-        float altura = qBound(0.0f, -camaraY / 2880.0f, 1.0f);
-        QColor cielo(111 + qRound(101 * altura), 164 + qRound(90 * altura), 198 + qRound(52 * altura));
-        painter.fillRect(0, 0, width(), height(), cielo);
-    } else if (!fondoLvl1Escalado.isNull() && fondoLvl1Escalado.width() > 0) {
+        float mezclaFinal = qBound(0.0f, (-camaraY - 2000.0f) / 700.0f, 1.0f);
+        if (mezclaFinal < 1.0f) {
+            if (!fondoCieloMedio.isNull()) painter.drawPixmap(0, 0, fondoCieloMedio);
+            else painter.fillRect(0, 0, width(), height(), QColor(111, 180, 230));
+        }
+        if (mezclaFinal > 0.0f && !fondoCieloFinal.isNull()) {
+            painter.setOpacity(mezclaFinal);
+            painter.drawPixmap(0, 0, fondoCieloFinal);
+            painter.setOpacity(1.0);
+        }
+    } else if(!fondoLvl1Escalado.isNull() && fondoLvl1Escalado.width() > 0) {
         int anchoFondo = fondoLvl1Escalado.width();
         float anchoMaximoNivel = anchoFondo * 5.0f;
 
@@ -1184,6 +1218,24 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     painter.save();
     painter.translate(0, -camaraY);
 
+    auto dibujarNubes = [&](bool delante) {
+        if (nivelActual != 2 || spriteNube.isNull()) return;
+        for (plataformas* plat : Plataforma) {
+            QRectF hbplat = plat->GETHitbox();
+            if (hbplat.y() < camaraY - 150 || hbplat.y() > camaraY + height() + 150) continue;
+            int anchoDibujo = qRound(hbplat.width() * 1.25f);
+            const QPixmap &nube = nubeParaAncho(anchoDibujo);
+            int nubeX = qRound(hbplat.x() - camaraX - (anchoDibujo - hbplat.width()) / 2.0f);
+            int nubeY = qRound(hbplat.y() - nube.height() * 0.40f);
+            if (!delante) {
+                painter.drawPixmap(nubeX, nubeY, nube);
+            } else {
+                int corte = qRound(hbplat.y()) - 10 - nubeY;        // desde 10 px sobre donde se pisa hacia abajo
+                painter.drawPixmap(nubeX, nubeY + corte, nube, 0, corte, nube.width(), nube.height() - corte);
+            }
+        }
+    };
+    dibujarNubes(false);
     int indiceFrame = 0;
     int spriteY = 1669;
     int totalFramesFila = 12;
@@ -1750,6 +1802,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
             }
         }
     }
+    dibujarNubes(true);
     painter.restore();
     painter.setPen(Qt::white);
     QFont fuenteHud("Arial", 14, QFont::Bold);
@@ -1858,7 +1911,8 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         int offsetVisualY = -5;
         int alturaVisualSprite = 60;
 
-        if (nivelActual == 2) {          // nube provisional
+        if (nivelActual == 2) {
+            if (!spriteNube.isNull()) continue;
             int w = static_cast<int>(hbplat.width());
             painter.setPen(Qt::NoPen);
             painter.setBrush(QColor(245, 247, 252));
@@ -1922,20 +1976,48 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     }
     if (jefe != nullptr && jefe->GETEstado() != EstadoEnemigo::destruido) {
         QRectF cuerpo = jefe->GETHitbox();
-        QColor colorCuerpo = jefe->enFase2() ? QColor(200, 60, 40, 230) : QColor(230, 190, 80, 230);
-        if (jefe->GETDestello() > 0.0f) colorCuerpo = Qt::white;       // destello al teletransportarse
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(QColor(255, 220, 120, 60));
-        painter.drawEllipse(cuerpo.center(), 70, 90);
-        painter.setBrush(colorCuerpo);
-        painter.drawRect(cuerpo.adjusted(0, 30, 0, 0));
-        painter.drawEllipse(QPointF(cuerpo.center().x(), cuerpo.top() + 20), 22, 22);
         QPointF ojos = jefe->GETOjos();
-        painter.setBrush(QColor(255, 40, 40));
-        painter.drawEllipse(QPointF(ojos.x() - 8, ojos.y()), 4, 3);
-        painter.drawEllipse(QPointF(ojos.x() + 8, ojos.y()), 4, 3);
+        bool destello = jefe->GETDestello() > 0.0f;
 
-        if (jefe->GETFaseLaser() == 1) {             // aviso
+        painter.setPen(Qt::NoPen);                                      // aura: dorada, roja en la furia
+        painter.setBrush(jefe->enFase2() ? QColor(255, 60, 40, 70) : QColor(255, 220, 120, 60));
+        painter.drawEllipse(cuerpo.center(), 82, 74);
+
+        if (!spriteGaitan.isNull()) {
+            int fila = 0, col = (relojAnim / 18) % 4;
+            if (jefe->GETDolor() > 0.0f) {
+                fila = 2;
+                col = qBound(0, static_cast<int>((0.36f - jefe->GETDolor()) / 0.09f), 3);
+            } else if (jefe->GETFaseLaser() != 0) {
+                fila = 1;
+                col = (jefe->GETFaseLaser() == 2) ? 3 : 1 + (relojAnim / 6) % 2;
+            } else if (jefe->GETGrito() > 0.0f) {
+                fila = 1;
+                col = 1 + (relojAnim / 6) % 2;
+            } else if (jefe->enFase2()) {
+                fila = 1;
+                col = 0;
+            }
+            int pechoX = qRound(cuerpo.center().x()) - 88;
+            int pechoY = qRound(cuerpo.bottom()) - 124;
+
+            if (destello) painter.setOpacity(0.35 + 0.35 * ((relojAnim / 2) % 2));
+            painter.save();
+            if (jefe->miraIzquierda()) {
+                painter.translate(pechoX + 176, pechoY);
+                painter.scale(-1, 1);
+                painter.drawPixmap(0, 0, spriteGaitan, col * 176, fila * 124, 176, 124);
+            } else {
+                painter.drawPixmap(pechoX, pechoY, spriteGaitan, col * 176, fila * 124, 176, 124);
+            }
+            painter.restore();
+            painter.setOpacity(1.0);
+        } else {
+            painter.setBrush(destello ? QColor(Qt::white) : QColor(230, 190, 80, 230));
+            painter.drawRect(cuerpo.adjusted(10, 40, -10, 0));
+            painter.drawEllipse(QPointF(cuerpo.center().x(), cuerpo.top() + 25), 24, 24);
+        }
+        if (jefe->GETFaseLaser() == 1) {
             painter.setPen(QPen(QColor(255, 60, 60, 110), 2));
             painter.drawLine(ojos, jefe->GETFinLaser());
         } else if (jefe->GETFaseLaser() == 2) {      // disparando

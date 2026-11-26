@@ -32,6 +32,8 @@ private:
     int zonaActual;
     int ataquesDesdeTeleport;
     float destello;
+    float tiempoDolor;
+    float tiempoGrito;
 
     int faseLaser;
     float tiempoLaser;
@@ -76,6 +78,9 @@ public:
     bool enFase2() const;
     short GETVidaMaxima() const;
     float GETDestello() const;
+    float GETDolor() const;
+    float GETGrito() const;
+    bool miraIzquierda() const;
     int escalarDanio(int danioBase) const;
 
     // rayo láser

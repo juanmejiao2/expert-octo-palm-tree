@@ -16,6 +16,8 @@ JefeGaitan::JefeGaitan(int dificultad)
     zonaActual = 1;
     ataquesDesdeTeleport = 0;
     destello = 0.0f;
+    tiempoDolor = 0.0f;
+    tiempoGrito = 0.0f;
     faseLaser = 0;
     tiempoLaser = 0.0f;
     anguloLaser = 1.57f;
@@ -113,6 +115,8 @@ AtaqueGaitan JefeGaitan::razonar() {
 // ---------------------------------------------------------------- 3. ACCIÓN
 void JefeGaitan::actuar(AtaqueGaitan ataque, QList<Proyectil*> &proyectiles) {
     int extra = fase2 ? 1 : 0;
+        if (ataque != AtaqueLaser)
+        tiempoGrito = 0.45f;
     if (ataque == AtaqueLaser) {
         faseLaser = 1;
         tiempoLaser = 0.9f;
@@ -164,6 +168,8 @@ void JefeGaitan::actualizar(float dt, const jugador &j, QList<Proyectil*> &proye
     percibir(j, dt);
     mover(dt);
     if (destello > 0.0f) destello -= dt;
+    if (tiempoDolor > 0.0f) tiempoDolor -= dt;
+    if (tiempoGrito > 0.0f) tiempoGrito -= dt;
 
     if (faseLaser != 0) {
         QPointF ojos = GETOjos();
@@ -210,11 +216,12 @@ void JefeGaitan::mover(float dt) {
 }
 
 QRectF JefeGaitan::GETHitbox() const {
-    return QRectF(x - 35.0f, y - 60.0f, 70.0f, 120.0f);
+    return QRectF(x - 60.0f, y - 55.0f, 120.0f, 115.0f);
 }
 
 bool JefeGaitan::recibirDisparo(int danio) {
     recibirdano(danio);
+        tiempoDolor = 0.36f;
     if (!fase2 && vida <= vidaMaxima / 2) {
         fase2 = true;
         cambioDeFasePendiente = true;
@@ -238,8 +245,12 @@ float JefeGaitan::GETDestello() const { return destello; }
 int JefeGaitan::escalarDanio(int danioBase) const { return static_cast<int>(std::lround(danioBase * factorDanio)); }
 int JefeGaitan::GETFaseLaser() const { return faseLaser; }
 
+bool JefeGaitan::miraIzquierda() const { return xJugador < x; }
+float JefeGaitan::GETDolor() const { return tiempoDolor; }
+float JefeGaitan::GETGrito() const { return tiempoGrito; }
+
 QPointF JefeGaitan::GETOjos() const {
-    return QPointF(x, y - 38.0f);
+    return QPointF(x + (miraIzquierda() ? -24.0f : 24.0f), y - 12.0f);
 }
 
 QPointF JefeGaitan::GETFinLaser() const {

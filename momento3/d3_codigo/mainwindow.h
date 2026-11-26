@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QSet>
 #include <QPair>
+#include <Qhash>
 #include "jugador.h"
 #include "enemigos.h"
 #include "proyectil.h"
@@ -83,6 +84,13 @@ private:
     QList<plataformas*> Plataforma;
     QList<BalaSuelo> balasEnMapa;
     QPixmap spriteExplosion;
+    // ---------- nivel 2 ----------
+    QPixmap spriteGaitan;
+    QPixmap spriteNube;
+    QPixmap fondoCieloMedio;
+    QPixmap fondoCieloFinal;
+    QHash<int, QPixmap> cacheNubes;
+    const QPixmap &nubeParaAncho(int ancho);
     QList<ExplosionVisual> explosionesActivas;
     float limiteIzquierdoCamara = 0.0f;
     float limiteDerechoCamara = 1400.0f;
