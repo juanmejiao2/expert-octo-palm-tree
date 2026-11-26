@@ -3,6 +3,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <stdexcept>
+#include <random>
 
 // Recorrido del ascenso del nivel 2 (de abajo hacia arriba). y = línea donde se para Punisher.
 struct NubeNivel2 {
@@ -68,6 +69,9 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     peleaCamionActiva = false;
     camionDerrotadoPendiente = false;
     tiempoTransicionNivel2 = 0.0f;
+    timerSiguienteExplosionCamion = 0.0f;
+    explosionesCamionEmitidas = 0;
+    rngDrops.seed(std::random_device{}());
 
     this->setFixedSize(1280,720);
 
@@ -120,12 +124,15 @@ void MainWindow::reiniciarNivel() {
     enemigosEnNube.clear();
     qDeleteAll(enemigos);
     enemigos.clear();
+    enemigosDropsGenerados.clear();
     borrarJefe();
     delete camionEsmad;
     camionEsmad = nullptr;
     peleaCamionActiva = false;
     camionDerrotadoPendiente = false;
     tiempoTransicionNivel2 = 0.0f;
+    timerSiguienteExplosionCamion = 0.0f;
+    explosionesCamionEmitidas = 0;
 
     camaraX = 0.0f;
     camaraY = 0.0f;
@@ -298,6 +305,7 @@ void MainWindow::cargarNivel2() {
     enemigosEnNube.clear();
     qDeleteAll(enemigos);
     enemigos.clear();
+    enemigosDropsGenerados.clear();
     balasEnMapa.clear();
     curasEnMapa.clear();
     explosionesActivas.clear();
@@ -466,12 +474,30 @@ void MainWindow::actualizarJuego(){
                 if (en->GETEstado() != EstadoEnemigo::destruido) {
                     if (hitboxGolpe.intersects(en->GETHitbox())) {
                         en->recibirdano(25.0f);
+                        if (en->GETEstado() == EstadoEnemigo::destruido && !enemigosDropsGenerados.contains(en)) {
+                            enemigosDropsGenerados.insert(en);
+                            std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+                            if (dist(rngDrops) < 0.50f) {
+                                float dropX = en->GETX();
+                                float dropY = (en->GETY() < 650.0f) ? (en->GETY() - 25.0f) : 630.0f;
+                                if (dist(rngDrops) < 0.50f) {
+                                    balasEnMapa.append({dropX, dropY, false});
+                                } else {
+                                    curasEnMapa.append({dropX, dropY, false});
+                                }
+                            }
+                        }
                         break;
                     }
                 }
             }
             if (camionEsmad != nullptr && camionEsmad->GETEstado() != EstadoEnemigo::destruido) {
                 if (hitboxGolpe.intersects(camionEsmad->GETHitbox())) {
+                    std::uniform_int_distribution<int> distCamionGolpe(0, 6);
+                    if (distCamionGolpe(rngDrops) == 0) {
+                        float spawnX = qBound(8000.0f, jugador->GETX() + 100.0f, 9050.0f);
+                        balasEnMapa.append({spawnX, 630.0f, false});
+                    }
                     if (camionEsmad->recibirDisparo(25)) {
                         camionDerrotadoPendiente = true;
                         tiempoTransicionNivel2 = 0.0f;
@@ -530,6 +556,20 @@ void MainWindow::actualizarJuego(){
         }
         if (camionDerrotadoPendiente) {
             tiempoTransicionNivel2 += 0.016f;
+            timerSiguienteExplosionCamion += 0.016f;
+            if (camionEsmad != nullptr && explosionesCamionEmitidas < 8 && timerSiguienteExplosionCamion >= 0.085f) {
+                timerSiguienteExplosionCamion = 0.0f;
+                QRectF hbC = camionEsmad->GETHitbox();
+                static const float offsetsX[7] = {-75.0f, 65.0f, -25.0f, -90.0f, 45.0f, -45.0f, 0.0f};
+                static const float offsetsY[7] = {-95.0f, -45.0f, -115.0f, -35.0f, -90.0f, -60.0f, -70.0f};
+                static const float escalas[7]  = {1.15f,  1.05f,  1.25f,   1.00f,   1.15f,  1.30f,  1.95f};
+
+                int idx = (explosionesCamionEmitidas - 1) % 7;
+                float exX = hbC.center().x() + offsetsX[idx];
+                float exY = hbC.bottom() + offsetsY[idx];
+                explosionesActivas.append({exX, exY, 0, 0.0f, escalas[idx]});
+                explosionesCamionEmitidas++;
+            }
             for (int e = explosionesActivas.size() - 1; e >= 0; --e) {
                 explosionesActivas[e].tiempoFrame += 0.016f;
                 if (explosionesActivas[e].tiempoFrame >= 0.08f) {
@@ -540,7 +580,7 @@ void MainWindow::actualizarJuego(){
                     }
                 }
             }
-            if (tiempoTransicionNivel2 >= 1.1f) {
+            if (tiempoTransicionNivel2 >= 1.25f) {
                 cargarNivel2();
                 update();
                 return;
@@ -754,9 +794,16 @@ void MainWindow::actualizarJuego(){
 
         if (proyectiles[i]->GETDeJugador()) {
             if (camionEsmad != nullptr && camionEsmad->GETEstado() != EstadoEnemigo::destruido && hitboxBala.intersects(camionEsmad->GETHitbox())) {
+                std::uniform_int_distribution<int> distCamion(0, 6);
+                if (distCamion(rngDrops) == 0) {
+                    float spawnX = qBound(8000.0f, jugador->GETX() + 100.0f, 9050.0f);
+                    balasEnMapa.append({spawnX, 630.0f, false});
+                }
                 if (camionEsmad->recibirDisparo(25)) {
                     camionDerrotadoPendiente = true;
                     tiempoTransicionNivel2 = 0.0f;
+                    timerSiguienteExplosionCamion = 0.0f;
+                    explosionesCamionEmitidas = 1;
                     explosionesActivas.append({camionEsmad->GETX(), camionEsmad->GETY() - 65.0f, 0, 0.0f});
                 }
                 delete proyectiles[i];
@@ -764,6 +811,11 @@ void MainWindow::actualizarJuego(){
                 continue;
             }
             if (jefe != nullptr && jefe->GETEstado() != EstadoEnemigo::destruido && hitboxBala.intersects(jefe->GETHitbox())) {
+                std::uniform_int_distribution<int> distGaitan(0, 5);
+                if (distGaitan(rngDrops) == 0) {
+                    float spawnX = qBound(260.0f, jugador->GETX() + 80.0f, 980.0f);
+                    balasEnMapa.append({spawnX, -2245.0f, false});
+                }
                 if (jefe->recibirDisparo(25)) {
                     victoria = true;
                 }
@@ -775,6 +827,19 @@ void MainWindow::actualizarJuego(){
                 if (enemigo->GETEstado() != EstadoEnemigo::destruido) {
                     if (hitboxBala.intersects(enemigo->GETHitbox())) {
                         enemigo->recibirdano(25);
+                        if (enemigo->GETEstado() == EstadoEnemigo::destruido && !enemigosDropsGenerados.contains(enemigo)) {
+                            enemigosDropsGenerados.insert(enemigo);
+                            std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+                            if (dist(rngDrops) < 0.50f) {
+                                float dropX = enemigo->GETX();
+                                float dropY = (enemigo->GETY() < 650.0f) ? (enemigo->GETY() - 25.0f) : 630.0f;
+                                if (dist(rngDrops) < 0.50f) {
+                                    balasEnMapa.append({dropX, dropY, false});
+                                } else {
+                                    curasEnMapa.append({dropX, dropY, false});
+                                }
+                            }
+                        }
                         delete proyectiles[i];
                         proyectiles.removeAt(i);
                         proyectilEliminado = true;
@@ -802,7 +867,7 @@ void MainWindow::actualizarJuego(){
             if (proyectiles[i]->GETTipoMovimiento() == TipoMovimientoProyectil::Pendulo) {
                 hitboxProyectilEnemigo = QRectF(proyectiles[i]->GETX() - 14.0f, proyectiles[i]->GETY() - 14.0f, 28.0f, 28.0f);
             } else if (esSierra) {
-                hitboxProyectilEnemigo = QRectF(proyectiles[i]->GETX() - 34.0f, proyectiles[i]->GETY() - 34.0f, 68.0f, 68.0f);
+                hitboxProyectilEnemigo = QRectF(proyectiles[i]->GETX() - 30.0f, proyectiles[i]->GETY() - 34.0f, 68.0f, 68.0f);
             }
 
             bool colisionConJugador = hitboxProyectilEnemigo.intersects(jugador->GETHitbox());
@@ -829,7 +894,8 @@ void MainWindow::actualizarJuego(){
 
                 bool explosionToca = areaExplosion.intersects(jugador->GETHitbox());
                 if (explosionToca) {
-                    jugador->recibirDanoJugador(origen >= 0 && jefe != nullptr ? jefe->escalarDanio(33) : 33);
+                    int danioGranada = (origen >= 0 && nivelActual == 1 && camionEsmad != nullptr) ? camionEsmad->escalarDanio(26) : (origen >= 0 && jefe != nullptr ? jefe->escalarDanio(28) : 33);
+                    jugador->recibirDanoJugador(static_cast<short>(danioGranada));
                 }
                 if (origen >= 0 && jefe != nullptr) jefe->aprender(origen, explosionToca);
 
@@ -1817,7 +1883,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
         for (const auto& exp : explosionesActivas) {
             int expPantallaX = static_cast<int>(exp.x - camaraX);
-            float escalaExplosion = 1.0f;
+            float escalaExplosion = exp.escala;
             int anchoDibujo = qRound(anchoFrame * escalaExplosion);
             int altoDibujo = qRound(altoFrame * escalaExplosion);
             int expPantallaXPos = expPantallaX - (anchoDibujo / 2);
