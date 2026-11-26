@@ -25,6 +25,7 @@ set(PROJECT_SOURCES
         proyectil.cpp
         plataformas.h
         plataformas.cpp
+        recursos.rc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -51,6 +52,10 @@ else()
             ${PROJECT_SOURCES}
         )
     endif()
+endif()
+
+if(WIN32)
+    target_sources(D3_codigo PRIVATE recursos.rc)
 endif()
 
 target_link_libraries(D3_codigo PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)

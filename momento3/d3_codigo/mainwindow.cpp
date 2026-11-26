@@ -326,10 +326,10 @@ void MainWindow::cargarNivel2() {
     juegoTerminado = false;
 
     jugador->setX(100.0f);
-    jugador->setY(660.0f);
+    jugador->setY(638.0f);
     jugador->setVy(0.0f);
     jugador->setVelocidadX(0.0f);
-    jugador->setSueloY(660.0f);   // por ahora hay piso;
+    jugador->setSueloY(100000.0f);
 
     // Recorrido del ascenso (primero se valida la tabla)
     try {
@@ -340,6 +340,7 @@ void MainWindow::cargarNivel2() {
     for (const NubeNivel2 &n : RECORRIDO_NIVEL2) {
         Plataforma.append(new plataformas(n.x, n.y, n.ancho, 24.0f, n.amplitud, n.omega, n.fase));
     }
+    Plataforma.append(new plataformas(40.0f, 660.0f, 480.0f, 24.0f));
 
     // Se ubican respecto a su nube
     auto ponerEnemigo = [this](int indiceNube, float desplazamientoX, TipoEnemigoArma tipo, short vida) {
@@ -370,6 +371,19 @@ void MainWindow::cargarNivel2() {
         ponerEnemigo(14, 210.0f, TipoEnemigoArma::lanzallamas, vidaPesado);
         ponerEnemigo(16, 100.0f, TipoEnemigoArma::liberal, vidaCrook);
         ponerEnemigo(18, 100.0f, TipoEnemigoArma::esmadpistolon, vidaCrook);
+    }
+    auto ponerObjeto = [this](int indiceNube, bool esCura) {
+        plataformas *nube = Plataforma[indiceNube];
+        float centro = nube->GETX() + nube->GETHitbox().width() / 2.0f;
+        if (esCura) curasEnMapa.append({centro + 25.0f, nube->GETY() - 50.0f, false});
+        else        balasEnMapa.append({centro - 70.0f, nube->GETY() - 65.0f, false});
+    };
+    if (dificultadJuego == 0) {
+        for (int i : {0, 4, 8, 10, 14}) ponerObjeto(i, false);
+        for (int i : {2, 8, 14})        ponerObjeto(i, true);
+    } else {
+        for (int i : {2, 8, 14})        ponerObjeto(i, false);
+        for (int i : {4, 14})           ponerObjeto(i, true);
     }
 }
 // Devuelve la nube del ancho pedido. La primera vez la escala y la guarda; después solo la busca.
@@ -697,14 +711,21 @@ void MainWindow::actualizarJuego(){
     } else if (posEnPantallaY > 500.0f) {
         camaraY = jugador->GETY() - 500.0f;          // baja si se cae
     }
-    if (camaraY > 0.0f) camaraY = 0.0f;             // no mostrar debajo de la plaza
+    if (camaraY > 0.0f) camaraY = 0.0f;
     if (camaraY < -2880.0f) camaraY = -2880.0f;
+    if (!peleaActiva && jugador->GETY() > camaraY + height() + 150.0f) {   // se cayó de la nube grande
+        jugador->setX(100.0f);
+        jugador->setY(638.0f);
+        jugador->setVy(0.0f);
+        jugador->recibirDanoJugador(10);
+    }
     // ---------- pelea final contra Gaitán ----------
     if (!peleaActiva && jugador->GETY() < -2200.0f) {
         jefe = new JefeGaitan(dificultadJuego);
         peleaActiva = true;
         balasEnMapa.append({420.0f, -2310.0f, false});
         balasEnMapa.append({860.0f, -2310.0f, false});
+        curasEnMapa.append({610.0f, -2330.0f, false});
         recargaMunicion = 0.0f;
     }
     if (peleaActiva) {
@@ -1044,7 +1065,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         return;
     }
 
-    // ================== TEMPORAL - BORRAR ANTES DE ENTREGAR ==================
+    // ================== TEMPORAL DEMOSTRACION ==================
     // F2 salta directo al nivel 2 para probarlo sin jugar todo el nivel 1.
     if (event->key() == Qt::Key_F2) {
         cargarNivel2();
@@ -1069,8 +1090,18 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
             camionEsmad = new CamionEsmad(dificultadJuego);
         }
         return;
+    }    if (event->key() == Qt::Key_F4) {
+        if (nivelActual != 2) cargarNivel2();
+        jugador->setVida(100);
+        jugador->setMunicion(jugador->GETMaxMunicion());
+        jugador->setX(600.0f);
+        jugador->setY(-2302.0f);
+        jugador->setVy(0.0f);
+        camaraY = -2880.0f;
+        return;
     }
-    // ================ FIN TEMPORAL - BORRAR ANTES DE ENTREGAR ================
+
+    // ================ FIN TEMPORAL DEMOSTRACION ================
 
     if(event->key() == Qt::Key_Space){
         jugador->saltar();
