@@ -41,22 +41,22 @@ void JefeGaitan::configurarDificultad(int dificultad) {
         exploracion = 0.40f;
         usaPrediccion = false;
         cadenciaBase = 3.4f;
-        giroLaser = 0.2f;
+        giroLaser = 0.3f;
         duracionLaser = 1.4f;
-        factorDanio = 0.4f;
-        cantidadPendulos = 1;
-        cantidadLluvia = 3;
+        factorDanio = 0.6f;
+        cantidadPendulos = 3;
+        cantidadLluvia = 5;
         vidaMaxima = 250;
     } else {
         tasaAprendizaje = 0.25f;
         exploracion = 0.20f;
         usaPrediccion = true;
         cadenciaBase = 2.4f;
-        giroLaser = 0.45f;
+        giroLaser = 0.6f;
         duracionLaser = 1.8f;
-        factorDanio = 0.7f;
-        cantidadPendulos = 2;
-        cantidadLluvia = 4;
+        factorDanio = 0.9f;
+        cantidadPendulos = 5;
+        cantidadLluvia = 6;
         vidaMaxima = 450;
     }
     vida = vidaMaxima;
