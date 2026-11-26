@@ -46,12 +46,12 @@ void CamionEsmad::configurarDificultad(int dificultad) {
         tasaAprendizaje = 0.35f;
         exploracion = 0.12f;
         usaPrediccion = true;
-        cadenciaBase = 2.15f;
-        factorDanio = 0.75f;
-        cantidadSierras = 3;
+        cadenciaBase = 2.65f;
+        factorDanio = 0.55f;
+        cantidadSierras = 2;
         cantidadGranadas = 2;
-        balasRafaga = 4;
-        vidaMaxima = 800;
+        balasRafaga = 3;
+        vidaMaxima = 700;
     }
     vida = vidaMaxima;
 }
@@ -162,11 +162,11 @@ void CamionEsmad::actuar(AtaqueCamion ataque, QList<Proyectil*> &proyectiles) {
         int n = balasRafaga + extra;
         for (int i = 0; i < n; ++i) {
             float objetivoX = puntoObjetivoX(0.35f + i * 0.08f);
-            float objetivoY = yJugador + (i - n * 0.5f) * 14.0f;
+            float objetivoY = yJugador + (i - n * 0.5f) * 24.0f;
             float dx = objetivoX - origenX;
             float dy = objetivoY - origenY;
             float dist = std::sqrt(dx * dx + dy * dy);
-            float vel = fase2 ? 520.0f : 430.0f;
+            float vel = fase2 ? 430.0f : 360.0f;
 
             float vxBala = (dist > 0.0f) ? (dx / dist) * vel : -vel;
             float vyBala = (dist > 0.0f) ? (dy / dist) * vel : 0.0f;
@@ -244,7 +244,7 @@ void CamionEsmad::actualizar(float dt, const jugador &j, QList<Proyectil*> &proy
             proyectiles.append(sierra);
 
             sierrasPendientes--;
-            timerSiguienteSierra = fase2 ? 0.90f : 1.15f;
+            timerSiguienteSierra = fase2 ? 1.15f : 1.40f;
         }
     }
 }

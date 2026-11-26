@@ -2,7 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <random>
 #include <QTimer>
+#include <QSet>
 #include <QPair>
 #include <Qhash>
 #include "jugador.h"
@@ -33,6 +35,7 @@ struct ExplosionVisual {
     float x, y;
     int frameActual;
     float tiempoFrame;
+    float escala= 1.0f;
 };
 
 class MainWindow : public QMainWindow
@@ -110,5 +113,9 @@ private:
     bool peleaCamionActiva;
     bool camionDerrotadoPendiente;
     float tiempoTransicionNivel2;
+    float timerSiguienteExplosionCamion;
+    int explosionesCamionEmitidas;
+    std::mt19937 rngDrops;
+    QSet<enemigo*> enemigosDropsGenerados;
 };
 #endif // MAINWINDOW_H
