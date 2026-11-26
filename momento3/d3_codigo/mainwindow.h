@@ -7,6 +7,7 @@
 #include <QSet>
 #include <QPair>
 #include <Qhash>
+#include <QSoundEffect>
 #include "jugador.h"
 #include "enemigos.h"
 #include "proyectil.h"
@@ -91,6 +92,14 @@ private:
     QPixmap fondoCieloFinal;
     QHash<int, QPixmap> cacheNubes;
     const QPixmap &nubeParaAncho(int ancho);
+    // ---------- sonido ----------
+    QSoundEffect sonidoDisparo, sonidoGranada, sonidoLanzallamas, sonidoPasos;
+    QSoundEffect sonidoDanoPunisher, sonidoDanoEnemigo, sonidoMuerteEnemigo, sonidoDerrota;
+    QSoundEffect sonidoPuno[3];
+    int siguientePuno;
+    short vidaAnteriorJugador;
+    QSoundEffect musica;
+    void cargarSonido(QSoundEffect &sonido, const char *archivo, float volumen, bool enBucle = false);
     QList<ExplosionVisual> explosionesActivas;
     float limiteIzquierdoCamara = 0.0f;
     float limiteDerechoCamara = 1400.0f;
