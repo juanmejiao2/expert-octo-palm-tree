@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <stdexcept>
 #include <random>
+#include <QFileInfo>
 
 // Recorrido del ascenso del nivel 2 (de abajo hacia arriba). y = línea donde se para Punisher.
 struct NubeNivel2 {
@@ -105,6 +106,23 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     if (!fondoCieloMedio.load("cielo_medio.png"))  qWarning("No se encontró cielo_medio.png");
     if (!fondoCieloFinal.load("cielo_final.png"))  qWarning("No se encontró cielo_final.png");
 
+    cargarSonido(sonidoDisparo,       "disparo.wav",        0.50f);
+    cargarSonido(sonidoGranada,       "granada.wav",        0.80f);
+    cargarSonido(sonidoLanzallamas,   "lanzallamas.wav",    0.45f, true);
+    cargarSonido(sonidoPasos,         "pasos_punisher.wav", 0.35f, true);
+    cargarSonido(sonidoDanoPunisher,  "dano_punisher.wav",  0.80f);
+    cargarSonido(sonidoDanoEnemigo,   "dano_enemigo.wav",   0.60f);
+    cargarSonido(sonidoMuerteEnemigo, "muerte_enemigo.wav", 0.80f);
+    cargarSonido(sonidoDerrota,       "derrota.wav",        0.90f);
+    cargarSonido(sonidoPuno[0], "puno_1.wav", 0.70f);
+    cargarSonido(sonidoPuno[1], "puno_2.wav", 0.70f);
+    cargarSonido(sonidoPuno[2], "puno_3.wav", 0.70f);
+    siguientePuno = 0;
+    vidaAnteriorJugador = 100;
+
+    cargarSonido(musica, "musica_inicio.wav", 0.50f, true);
+    musica.play();
+
     QPixmap fondolvl1("BG_lvl1.jpg");
     if (!fondolvl1.isNull()) {
         fondoLvl1Escalado = fondolvl1.scaledToHeight(height(), Qt::SmoothTransformation);
@@ -144,6 +162,7 @@ void MainWindow::reiniciarNivel() {
     sectorLimpio = false;
     nivelActual = 1;
     jugador = new ::jugador(100.0f, 660.0f);
+    vidaAnteriorJugador = jugador->GETVida();
     if (dificultadJuego == 0) {
         jugador->setMaxMunicion(12);
         jugador->setMunicion(12);
@@ -410,6 +429,16 @@ const QPixmap &MainWindow::nubeParaAncho(int ancho) {
     }
     return cacheNubes.insert(ancho, resultado).value();
 }
+void MainWindow::cargarSonido(QSoundEffect &sonido, const char *archivo, float volumen, bool enBucle) {
+    QFileInfo info(archivo);
+    if (!info.exists()) {
+        qWarning("No se encontró el sonido %s", archivo);
+        return;
+    }
+    sonido.setSource(QUrl::fromLocalFile(info.absoluteFilePath()));
+    sonido.setVolume(volumen);
+    if (enBucle) sonido.setLoopCount(QSoundEffect::Infinite);
+}
 
 void MainWindow::borrarJefe() {
     delete jefe;
@@ -437,12 +466,15 @@ void MainWindow::actualizarJuego(){
         return;
     }
     if (juegoTerminado || victoria) {
+        if (sonidoPasos.isPlaying()) sonidoPasos.stop();
+        if (sonidoLanzallamas.isPlaying()) sonidoLanzallamas.stop();
         update();
         return;
     }
 
     if (jugador == nullptr || jugador->GETVida() <= 0) {
         juegoTerminado = true;
+        sonidoDerrota.play();
         update();
         return;
     }
@@ -498,6 +530,8 @@ void MainWindow::actualizarJuego(){
 
         if (frameActualGolpe >= 1 && frameActualGolpe <= 3 && !yaPegoEstePunio) {
             yaPegoEstePunio = true;
+            sonidoPuno[siguientePuno].play();
+            siguientePuno = (siguientePuno + 1) % 3;
 
             float anchoGolpe = 50.0f;
             float altoGolpe = 30.0f;
@@ -516,6 +550,8 @@ void MainWindow::actualizarJuego(){
                 if (en->GETEstado() != EstadoEnemigo::destruido) {
                     if (hitboxGolpe.intersects(en->GETHitbox())) {
                         en->recibirdano(25.0f);
+                        if (en->GETEstado() == EstadoEnemigo::destruido) sonidoMuerteEnemigo.play();
+                        else sonidoDanoEnemigo.play();
                         if (en->GETEstado() == EstadoEnemigo::destruido && !enemigosDropsGenerados.contains(en)) {
                             enemigosDropsGenerados.insert(en);
                             std::uniform_real_distribution<float> dist(0.0f, 1.0f);
@@ -772,6 +808,7 @@ void MainWindow::actualizarJuego(){
             jugador->setVx(0.0f);
         }
     }
+    bool algunLanzallamasActivo = false;
 
     for (enemigo* enemigo : enemigos) {
         enemigo->actualizar(jugador->GETX(), jugador->GETY());
@@ -780,6 +817,10 @@ void MainWindow::actualizarJuego(){
 
         if (nivelActual == 2 && (enemigo->GETY() < camaraY - 100 || enemigo->GETY() > camaraY + height() + 100)) {
             enemigoEnPantalla = false;
+        }
+        if (enemigoEnPantalla && enemigo->GETTipoEnemigo() == TipoEnemigoArma::lanzallamas &&
+            enemigo->GETEstado() == EstadoEnemigo::disparando && enemigo->estaLanzandoLlama()) {
+            algunLanzallamasActivo = true;
         }
 
         if (enemigoEnPantalla && enemigo->puededisparar()) {
@@ -816,6 +857,7 @@ void MainWindow::actualizarJuego(){
                     velocidadBalaY = (dirY / distancia) * velocidadBala;
                 }
                 proyectiles.append(new Proyectil(origenX, origenY, velocidadBalaX, velocidadBalaY, false, TipoMovimientoProyectil::Rectilineo));
+                sonidoDisparo.play();
             }
             else if (tipo == TipoEnemigoArma::lanzallamas) {
                 float anchoLlama = 130.0f;
@@ -845,6 +887,8 @@ void MainWindow::actualizarJuego(){
             }
         }
     }
+    if (algunLanzallamasActivo && !sonidoLanzallamas.isPlaying()) sonidoLanzallamas.play();
+    else if (!algunLanzallamasActivo && sonidoLanzallamas.isPlaying()) sonidoLanzallamas.stop();
 
     update();
 
@@ -888,6 +932,8 @@ void MainWindow::actualizarJuego(){
                 if (enemigo->GETEstado() != EstadoEnemigo::destruido) {
                     if (hitboxBala.intersects(enemigo->GETHitbox())) {
                         enemigo->recibirdano(25);
+                        if (enemigo->GETEstado() == EstadoEnemigo::destruido) sonidoMuerteEnemigo.play();
+                        else sonidoDanoEnemigo.play();
                         if (enemigo->GETEstado() == EstadoEnemigo::destruido && !enemigosDropsGenerados.contains(enemigo)) {
                             enemigosDropsGenerados.insert(enemigo);
                             std::uniform_real_distribution<float> dist(0.0f, 1.0f);
@@ -961,11 +1007,12 @@ void MainWindow::actualizarJuego(){
                 if (origen >= 0 && jefe != nullptr) jefe->aprender(origen, explosionToca);
 
                 explosionesActivas.append({centroGranadaX, centroGranadaY, 0, 0.0f});
+                sonidoGranada.play();
 
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
                 proyectilEliminado = true;
-                break;
+                continue;
             }
 
             if (tocaSuelo || tocaPlataforma) {
@@ -975,7 +1022,7 @@ void MainWindow::actualizarJuego(){
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
                 proyectilEliminado = true;
-                break;
+                continue;
             }
 
             if (colisionConJugador) {
@@ -999,7 +1046,7 @@ void MainWindow::actualizarJuego(){
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
                 proyectilEliminado = true;
-                break;
+                continue;
             }
         }
 
@@ -1025,6 +1072,12 @@ void MainWindow::actualizarJuego(){
             }
         }
     }
+    bool caminando = jugador->GETEnMovimiento() && !jugador->GETEnElAire();
+    if (caminando && !sonidoPasos.isPlaying()) sonidoPasos.play();
+    else if (!caminando && sonidoPasos.isPlaying()) sonidoPasos.stop();
+
+    if (jugador->GETVida() < vidaAnteriorJugador) sonidoDanoPunisher.play();
+    vidaAnteriorJugador = jugador->GETVida();
 }
 
 
@@ -1037,10 +1090,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         if (event->key() == Qt::Key_1) {
             dificultadJuego = 0; // Modo facil
             enSeleccionDificultad = false;
+            musica.stop();
             reiniciarNivel();
         } else if (event->key() == Qt::Key_2) {
             dificultadJuego = 1; // Dificil
             enSeleccionDificultad = false;
+            musica.stop();
             reiniciarNivel();
         }
         return;
@@ -1049,6 +1104,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         if (event->key() == Qt::Key_R || event->key() == Qt::Key_Return) {
             borrarJefe();
             enSeleccionDificultad = true;
+            musica.play();
         }
         return;
     }
@@ -1121,6 +1177,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         Proyectil* nuevoProyectil = jugador->disparar();
         if (nuevoProyectil != nullptr) {
             proyectiles.append(nuevoProyectil);
+            sonidoDisparo.play();
         }
     }
 }
