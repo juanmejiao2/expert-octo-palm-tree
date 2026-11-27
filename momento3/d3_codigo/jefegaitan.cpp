@@ -37,25 +37,25 @@ JefeGaitan::JefeGaitan(int dificultad)
 
 void JefeGaitan::configurarDificultad(int dificultad) {
     if (dificultad == 0) {
-        tasaAprendizaje = 0.10f;
+        tasaAprendizaje = 0.15f;
         exploracion = 0.40f;
         usaPrediccion = false;
         cadenciaBase = 3.4f;
         giroLaser = 0.3f;
         duracionLaser = 1.4f;
         factorDanio = 0.6f;
-        cantidadPendulos = 3;
+        cantidadPendulos = 2;
         cantidadLluvia = 5;
-        vidaMaxima = 350;
+        vidaMaxima = 400;
     } else {
-        tasaAprendizaje = 0.25f;
+        tasaAprendizaje = 0.30f;
         exploracion = 0.20f;
         usaPrediccion = true;
         cadenciaBase = 2.4f;
         giroLaser = 0.6f;
         duracionLaser = 1.8f;
         factorDanio = 0.9f;
-        cantidadPendulos = 5;
+        cantidadPendulos = 3;
         cantidadLluvia = 6;
         vidaMaxima = 600;
     }
