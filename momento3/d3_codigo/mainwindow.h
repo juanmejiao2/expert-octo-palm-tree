@@ -78,6 +78,8 @@ private:
     QPixmap spriteGranada;
     QPixmap spriteCamionEsmad;
     QPixmap spriteSierra;
+    QPixmap spriteMonedaMil;
+    QPixmap spriteRayoLaser;
     QList<CuraSuelo> curasEnMapa;
     QList<enemigo*> enemigos;
     QList<QPair<enemigo*, plataformas*>> enemigosEnNube;
@@ -96,6 +98,14 @@ private:
     QSoundEffect sonidoDisparo, sonidoGranada, sonidoLanzallamas, sonidoPasos;
     QSoundEffect sonidoDanoPunisher, sonidoDanoEnemigo, sonidoMuerteEnemigo, sonidoDerrota;
     QSoundEffect sonidoPuno[3];
+    QSoundEffect sonidoMunicion, sonidoCura, sonidoSierra, sonidoMotorCamion;
+    QSoundEffect musicaJuego;
+    QSoundEffect sonidoLaser;
+    QSoundEffect sonidoGolpeGaitan;
+    QSoundEffect sonidoFase2Gaitan;
+    QSoundEffect musicaGaitan;
+    QSoundEffect musicaPeleaGaitan;
+    float tiempoParpadeoCura;
     int siguientePuno;
     short vidaAnteriorJugador;
     QSoundEffect musica;
@@ -126,5 +136,8 @@ private:
     int explosionesCamionEmitidas;
     std::mt19937 rngDrops;
     QSet<enemigo*> enemigosDropsGenerados;
+    float tiempoNivel1;
+    float tiempoMaxNivel1;
+    bool mostrarTutorialControles = true;
 };
 #endif // MAINWINDOW_H

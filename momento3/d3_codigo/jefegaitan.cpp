@@ -46,7 +46,7 @@ void JefeGaitan::configurarDificultad(int dificultad) {
         factorDanio = 0.6f;
         cantidadPendulos = 3;
         cantidadLluvia = 5;
-        vidaMaxima = 250;
+        vidaMaxima = 350;
     } else {
         tasaAprendizaje = 0.25f;
         exploracion = 0.20f;
@@ -57,7 +57,7 @@ void JefeGaitan::configurarDificultad(int dificultad) {
         factorDanio = 0.9f;
         cantidadPendulos = 5;
         cantidadLluvia = 6;
-        vidaMaxima = 450;
+        vidaMaxima = 600;
     }
     vida = vidaMaxima;
 }

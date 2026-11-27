@@ -92,6 +92,8 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     spriteGranada.load("granada.png");
     spriteCamionEsmad.load("camionesmad.png");
     spriteSierra.load("sierras.png");
+    spriteMonedaMil.load("moneda_mil.png");
+    spriteRayoLaser.load("RAYOS_LASER.png");
     QPixmap fuego("fuego.png");
     if (!fuego.isNull()) {
         spriteFuego = fuego;
@@ -106,14 +108,22 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     if (!fondoCieloMedio.load("cielo_medio.png"))  qWarning("No se encontró cielo_medio.png");
     if (!fondoCieloFinal.load("cielo_final.png"))  qWarning("No se encontró cielo_final.png");
 
-    cargarSonido(sonidoDisparo,       "disparo.wav",        0.50f);
-    cargarSonido(sonidoGranada,       "granada.wav",        0.80f);
+    cargarSonido(sonidoDisparo,       "disparo.wav",        0.40f);
+    cargarSonido(sonidoGranada,       "granada.wav",        0.50f);
     cargarSonido(sonidoLanzallamas,   "lanzallamas.wav",    0.45f, true);
     cargarSonido(sonidoPasos,         "pasos_punisher.wav", 0.35f, true);
     cargarSonido(sonidoDanoPunisher,  "dano_punisher.wav",  0.80f);
     cargarSonido(sonidoDanoEnemigo,   "dano_enemigo.wav",   0.60f);
     cargarSonido(sonidoMuerteEnemigo, "muerte_enemigo.wav", 0.80f);
     cargarSonido(sonidoDerrota,       "derrota.wav",        0.90f);
+    cargarSonido(sonidoMunicion,    "municion.wav",     0.65f);
+    cargarSonido(sonidoCura,        "cura.wav",         0.60f);
+    cargarSonido(sonidoSierra,      "sierra.wav",       0.35f);
+    cargarSonido(sonidoMotorCamion, "motor_camion.wav", 0.40f, true);
+    cargarSonido(sonidoLaser, "laser.wav", 0.45f);
+    cargarSonido(sonidoGolpeGaitan, "gaitan_daño.wav", 0.70f);
+    cargarSonido(sonidoFase2Gaitan, "fase_2_gaitan.wav", 0.75f);
+    tiempoParpadeoCura = 0.0f;
     cargarSonido(sonidoPuno[0], "puno_1.wav", 0.70f);
     cargarSonido(sonidoPuno[1], "puno_2.wav", 0.70f);
     cargarSonido(sonidoPuno[2], "puno_3.wav", 0.70f);
@@ -121,6 +131,9 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     vidaAnteriorJugador = 100;
 
     cargarSonido(musica, "musica_inicio.wav", 0.50f, true);
+    cargarSonido(musicaJuego, "musicaJuego.wav",  0.25f, true);
+    cargarSonido(musicaGaitan, "MUSICA_FINAL.wav", 0.45f, true);
+    cargarSonido(musicaPeleaGaitan, "musica_gaitan.wav", 0.45f, true);
     musica.play();
 
     QPixmap fondolvl1("BG_lvl1.jpg");
@@ -135,6 +148,15 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
 }
 
 void MainWindow::reiniciarNivel() {
+    mostrarTutorialControles = true;
+    tiempoMaxNivel1 = (dificultadJuego == 0) ? 310.0f : 300.0f;
+    tiempoNivel1 = tiempoMaxNivel1;
+
+    if (sonidoMotorCamion.isPlaying()) sonidoMotorCamion.stop();
+    tiempoParpadeoCura = 0.0f;
+
+    if (musicaGaitan.isPlaying()) musicaGaitan.stop();
+
     if(jugador != nullptr){
         delete jugador;
         jugador=nullptr;
@@ -164,11 +186,11 @@ void MainWindow::reiniciarNivel() {
     jugador = new ::jugador(100.0f, 660.0f);
     vidaAnteriorJugador = jugador->GETVida();
     if (dificultadJuego == 0) {
-        jugador->setMaxMunicion(12);
-        jugador->setMunicion(12);
+        jugador->setMaxMunicion(40);
+        jugador->setMunicion(40);
     } else {
-        jugador->setMaxMunicion(10);
-        jugador->setMunicion(10);
+        jugador->setMaxMunicion(30);
+        jugador->setMunicion(30);
     }
 
     Plataforma.clear();
@@ -338,6 +360,14 @@ void MainWindow::cargarNivel2() {
     peleaCamionActiva = false;
     camionDerrotadoPendiente = false;
     tiempoTransicionNivel2 = 0.0f;
+    if (sonidoMotorCamion.isPlaying()) sonidoMotorCamion.stop();
+    tiempoParpadeoCura = 0.0f;
+    musica.stop();
+    musicaJuego.stop();
+    if (!musicaGaitan.isPlaying()) {
+        musicaGaitan.play();
+    }
+    if (musicaPeleaGaitan.isPlaying()) musicaPeleaGaitan.stop();
 
     camaraX = 0.0f;
     camaraY = 0.0f;
@@ -468,12 +498,16 @@ void MainWindow::actualizarJuego(){
     if (juegoTerminado || victoria) {
         if (sonidoPasos.isPlaying()) sonidoPasos.stop();
         if (sonidoLanzallamas.isPlaying()) sonidoLanzallamas.stop();
+        if (sonidoMotorCamion.isPlaying()) sonidoMotorCamion.stop();
         update();
         return;
     }
 
     if (jugador == nullptr || jugador->GETVida() <= 0) {
         juegoTerminado = true;
+        if (musicaGaitan.isPlaying()) musicaGaitan.stop();
+        if (musicaJuego.isPlaying()) musicaJuego.stop();
+        if (musicaPeleaGaitan.isPlaying()) musicaPeleaGaitan.stop();
         sonidoDerrota.play();
         update();
         return;
@@ -555,14 +589,12 @@ void MainWindow::actualizarJuego(){
                         if (en->GETEstado() == EstadoEnemigo::destruido && !enemigosDropsGenerados.contains(en)) {
                             enemigosDropsGenerados.insert(en);
                             std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+                            float dropX = en->GETX();
+                            float dropY = (en->GETY() < 650.0f) ? (en->GETY() - 25.0f) : 630.0f;
                             if (dist(rngDrops) < 0.50f) {
-                                float dropX = en->GETX();
-                                float dropY = (en->GETY() < 650.0f) ? (en->GETY() - 25.0f) : 630.0f;
-                                if (dist(rngDrops) < 0.50f) {
-                                    balasEnMapa.append({dropX, dropY, false});
-                                } else {
-                                    curasEnMapa.append({dropX, dropY, false});
-                                }
+                                balasEnMapa.append({dropX, dropY, false});
+                            } else {
+                                curasEnMapa.append({dropX, dropY, false});
                             }
                         }
                         break;
@@ -600,8 +632,9 @@ void MainWindow::actualizarJuego(){
                 int munActual = jugador->GETMunicion();
                 int munMax = jugador->GETMaxMunicion();
                 if (munActual < munMax) {
-                    jugador->setMunicion(munActual + 3);
+                    jugador->setMunicion(munActual + 6);
                     balasEnMapa[i].recolectada = true;
+                    sonidoMunicion.play();
                 }
             }
         }
@@ -619,10 +652,32 @@ void MainWindow::actualizarJuego(){
                     short nuevaVida = qMin<short>(100, vidaActual + 25);
                     jugador->setVida(nuevaVida);
                     curasEnMapa[i].recolectada = true;
+                    sonidoCura.play();
+                    tiempoParpadeoCura = 0.45f;
                 }
             }
         }
     }
+    if (tiempoParpadeoCura > 0.0f) {
+        tiempoParpadeoCura = qMax(0.0f, tiempoParpadeoCura - 0.016f);
+    }
+
+    if (nivelActual == 1 && !camionDerrotadoPendiente) {
+        tiempoNivel1 -= 0.016f;
+        if (tiempoNivel1 <= 0.0f) {
+            tiempoNivel1 = 0.0f;
+            juegoTerminado = true;
+            if (musicaGaitan.isPlaying()) musicaGaitan.stop();
+            if (musicaJuego.isPlaying()) musicaJuego.stop();
+            if (sonidoPasos.isPlaying()) sonidoPasos.stop();
+            if (sonidoLanzallamas.isPlaying()) sonidoLanzallamas.stop();
+            if (sonidoMotorCamion.isPlaying()) sonidoMotorCamion.stop();
+            sonidoDerrota.play();
+            update();
+            return;
+        }
+    }
+
     if (nivelActual == 1) {
         if (dificultadJuego == 0) {
             if (camionEsmad != nullptr) {
@@ -677,8 +732,22 @@ void MainWindow::actualizarJuego(){
             }
         }
 
+        bool motorDebeSonar = (dificultadJuego == 1 && peleaCamionActiva && camionEsmad != nullptr && !camionDerrotadoPendiente && camionEsmad->GETEstado() != EstadoEnemigo::destruido);
+        if (motorDebeSonar && !sonidoMotorCamion.isPlaying()) {
+            sonidoMotorCamion.play();
+        } else if (!motorDebeSonar && sonidoMotorCamion.isPlaying()) {
+            sonidoMotorCamion.stop();
+        }
+
         if (dificultadJuego == 1 && peleaCamionActiva && camionEsmad != nullptr) {
+            int cantAntes = proyectiles.size();
             camionEsmad->actualizar(0.016f, *jugador, proyectiles);
+            for (int k = cantAntes; k < proyectiles.size(); ++k) {
+                if (proyectiles[k]->GETAtaqueOrigen() == AtaqueSierras) {
+                    sonidoSierra.play();
+                    break;
+                }
+            }
             if (camionEsmad->consumirCambioDeFase()) {
                 explosionesActivas.append({camionEsmad->GETX(), camionEsmad->GETY() - 60.0f, 0, 0.0f});
             }
@@ -759,9 +828,12 @@ void MainWindow::actualizarJuego(){
     if (!peleaActiva && jugador->GETY() < -2200.0f) {
         jefe = new JefeGaitan(dificultadJuego);
         peleaActiva = true;
-        balasEnMapa.append({420.0f, -2310.0f, false});
-        balasEnMapa.append({860.0f, -2310.0f, false});
-        curasEnMapa.append({610.0f, -2330.0f, false});
+        if (musicaGaitan.isPlaying()) musicaGaitan.stop();
+        if (musicaJuego.isPlaying()) musicaJuego.stop();
+        if (!musicaPeleaGaitan.isPlaying()) musicaPeleaGaitan.play();
+        balasEnMapa.append({420.0f, JefeGaitan::PISO_ARENA - 70.0f, false});
+        balasEnMapa.append({860.0f, JefeGaitan::PISO_ARENA - 70.0f, false});
+        curasEnMapa.append({610.0f, JefeGaitan::PISO_ARENA - 70.0f, false});
         recargaMunicion = 0.0f;
     }
     if (peleaActiva) {
@@ -782,8 +854,25 @@ void MainWindow::actualizarJuego(){
         if (danioLaser > 0) {
             jugador->recibirDanoJugador(static_cast<short>(danioLaser));
         }
+        static int faseLaserPrevia = 0;
+        static float tiempoLaserSonando = 0.0f;
+        const float duracionMaxSonidoLaser = 0.50f;
+        int faseLaserActual = jefe->GETFaseLaser();
+        if (faseLaserActual == 2 && faseLaserPrevia != 2) {
+            sonidoLaser.play();
+            tiempoLaserSonando = 0.0f;
+        }
+        if (faseLaserActual == 2 && sonidoLaser.isPlaying()) {
+            tiempoLaserSonando += 0.016f;
+            if (tiempoLaserSonando >= duracionMaxSonidoLaser) {
+                sonidoLaser.stop();
+            }
+        } else if (faseLaserActual != 2 && sonidoLaser.isPlaying()) {
+            sonidoLaser.stop();
+        }
         if (jefe->consumirCambioDeFase()) {
             explosionesActivas.append({jefe->GETX(), jefe->GETY(), 0, 0.0f});
+            sonidoFase2Gaitan.play();
         }
     }
 }
@@ -919,10 +1008,14 @@ void MainWindow::actualizarJuego(){
                 std::uniform_int_distribution<int> distGaitan(0, 5);
                 if (distGaitan(rngDrops) == 0) {
                     float spawnX = qBound(260.0f, jugador->GETX() + 80.0f, 980.0f);
-                    balasEnMapa.append({spawnX, -2245.0f, false});
+                    balasEnMapa.append({spawnX, JefeGaitan::PISO_ARENA - 70.0f, false});
                 }
                 if (jefe->recibirDisparo(25)) {
                     victoria = true;
+                    if (musicaGaitan.isPlaying()) musicaGaitan.stop();
+                    if (musicaPeleaGaitan.isPlaying()) musicaPeleaGaitan.stop();
+                }else {
+                    sonidoGolpeGaitan.play();
                 }
                 delete proyectiles[i];
                 proyectiles.removeAt(i);
@@ -937,14 +1030,12 @@ void MainWindow::actualizarJuego(){
                         if (enemigo->GETEstado() == EstadoEnemigo::destruido && !enemigosDropsGenerados.contains(enemigo)) {
                             enemigosDropsGenerados.insert(enemigo);
                             std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+                            float dropX = enemigo->GETX();
+                            float dropY = (enemigo->GETY() < 650.0f) ? (enemigo->GETY() - 25.0f) : 630.0f;
                             if (dist(rngDrops) < 0.50f) {
-                                float dropX = enemigo->GETX();
-                                float dropY = (enemigo->GETY() < 650.0f) ? (enemigo->GETY() - 25.0f) : 630.0f;
-                                if (dist(rngDrops) < 0.50f) {
-                                    balasEnMapa.append({dropX, dropY, false});
-                                } else {
-                                    curasEnMapa.append({dropX, dropY, false});
-                                }
+                                balasEnMapa.append({dropX, dropY, false});
+                            } else {
+                                curasEnMapa.append({dropX, dropY, false});
                             }
                         }
                         delete proyectiles[i];
@@ -1091,11 +1182,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
             dificultadJuego = 0; // Modo facil
             enSeleccionDificultad = false;
             musica.stop();
+            musicaJuego.play();
             reiniciarNivel();
         } else if (event->key() == Qt::Key_2) {
             dificultadJuego = 1; // Dificil
             enSeleccionDificultad = false;
             musica.stop();
+            musicaJuego.play();
             reiniciarNivel();
         }
         return;
@@ -1103,6 +1196,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     if (victoria) {
         if (event->key() == Qt::Key_R || event->key() == Qt::Key_Return) {
             borrarJefe();
+            if (musicaGaitan.isPlaying()) musicaGaitan.stop();
+            musicaJuego.stop();
             enSeleccionDificultad = true;
             musica.play();
         }
@@ -1110,6 +1205,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     }
     if (juegoTerminado) {
         if (event->key() == Qt::Key_R || event->key() == Qt::Key_Return) {
+            if (sonidoDerrota.isPlaying()) sonidoDerrota.stop();
+            if (musicaGaitan.isPlaying()) musicaGaitan.stop();
             if (nivelActual == 2) {
                 jugador->setVida(100);
                 jugador->setMunicion(jugador->GETMaxMunicion());
@@ -1121,8 +1218,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         return;
     }
 
-    // ================== TEMPORAL DEMOSTRACION ==================
-    // F2 salta directo al nivel 2 para probarlo sin jugar todo el nivel 1.
+    // F2 salta directo al nivel 2 para probarlo sin jugar todo el nivel 1. Esto lo dejamos para la sutentación mejor, para poder probar los momentos importantes del juego :p
     if (event->key() == Qt::Key_F2) {
         cargarNivel2();
         return;
@@ -1131,8 +1227,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         if (nivelActual != 1) {
             reiniciarNivel();
         }
-        jugador->setMaxMunicion(999);
-        jugador->setMunicion(999);
         jugador->setVida(100);
         jugador->setX(7950.0f);
         jugador->setY(660.0f);
@@ -1146,10 +1240,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
             camionEsmad = new CamionEsmad(dificultadJuego);
         }
         return;
+
     }    if (event->key() == Qt::Key_F4) {
         if (nivelActual != 2) cargarNivel2();
         jugador->setVida(100);
-        jugador->setMunicion(jugador->GETMaxMunicion());
         jugador->setX(600.0f);
         jugador->setY(-2302.0f);
         jugador->setVy(0.0f);
@@ -1160,13 +1254,16 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     // ================ FIN TEMPORAL DEMOSTRACION ================
 
     if(event->key() == Qt::Key_Space){
+        mostrarTutorialControles = false;
         jugador->saltar();
     }
     else if (event->key() == Qt::Key_D || event->key() == Qt::Key_Right) {
+        mostrarTutorialControles = false;
         moviendoDerecha=true;
         jugador->setVelocidadX(300.0f);
     }
     else if (event->key() == Qt::Key_A || event->key() == Qt::Key_Left) {
+        mostrarTutorialControles = false;
         moviendoIzquierda=true;
         jugador->setVelocidadX(-300.0f);
     }
@@ -1311,9 +1408,9 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         for (plataformas* plat : Plataforma) {
             QRectF hbplat = plat->GETHitbox();
             if (hbplat.y() < camaraY - 150 || hbplat.y() > camaraY + height() + 150) continue;
-            int anchoDibujo = qRound(hbplat.width() * 1.25f);
+            int anchoDibujo = qRound(hbplat.width());
             const QPixmap &nube = nubeParaAncho(anchoDibujo);
-            int nubeX = qRound(hbplat.x() - camaraX - (anchoDibujo - hbplat.width()) / 2.0f);
+            int nubeX = qRound(hbplat.x() - camaraX);
             int nubeY = qRound(hbplat.y() - nube.height() * 0.40f);
             if (!delante) {
                 painter.drawPixmap(nubeX, nubeY, nube);
@@ -1514,6 +1611,16 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     if (!jugador->GETmirandoDerecha()) {
         painter.scale(-1, 1);
         pantallaX = -pantallaX - (spriteAncho * escalaAumento);
+    }
+
+    if (tiempoParpadeoCura > 0.0f) {
+        int pulso = static_cast<int>(tiempoParpadeoCura * 20.0f) % 2;
+        if (pulso == 0) {
+            QPainter pCura(&framesPunisherEscalado);
+            pCura.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+            pCura.fillRect(framesPunisherEscalado.rect(), QColor(60, 255, 110, 125));
+            pCura.end();
+        }
     }
 
     painter.drawPixmap(pantallaX, pantallaY, framesPunisherEscalado);
@@ -1906,6 +2013,18 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     painter.setBrush(Qt::red);
     painter.drawRect(100, 55, static_cast<int>(200 * porcentajeSalud), 22);
 
+    if (nivelActual == 1) {
+        int segTotales = qMax(0, static_cast<int>(std::ceil(tiempoNivel1)));
+        int minutos = segTotales / 60;
+        int segundos = segTotales % 60;
+        QString textoTimer = QString("TIEMPO: %1:%2").arg(minutos, 2, 10, QChar('0')).arg(segundos, 2, 10, QChar('0'));
+
+        painter.setPen(segTotales <= 15 ? Qt::red : Qt::white);
+        int anchoTimer = QFontMetrics(fuenteHud).horizontalAdvance(textoTimer);
+        painter.drawText(width() - anchoTimer - 30, 40, textoTimer);
+        painter.setPen(Qt::white);
+    }
+
     if (peleaActiva && jefe != nullptr) {
         int anchoBarra = 500;
         int barraX = (width() - anchoBarra) / 2;
@@ -1943,9 +2062,15 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         } else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Pendulo) {   // provisional: cuerda + bola
         painter.setPen(QPen(QColor(230, 210, 150), 2));
         painter.drawLine(QPointF(p->GETPivoteX() - camaraX, p->GETPivoteY()), QPointF(projPantallaX, projPantallaY));
-        painter.setPen(QPen(QColor(255, 200, 60), 3));
-        painter.setBrush(QColor(255, 120, 20));
-        painter.drawEllipse(QPointF(projPantallaX, projPantallaY), 14, 14);
+        if (!spriteMonedaMil.isNull()) {
+            QPixmap monedaEscalada = spriteMonedaMil.scaled(42, 42, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            painter.drawPixmap(projPantallaX - monedaEscalada.width() / 2,projPantallaY - monedaEscalada.height() / 2,monedaEscalada);
+        } else {
+            painter.setPen(QPen(QColor(255, 200, 60), 3));
+            painter.setBrush(QColor(255, 120, 20));
+            painter.drawEllipse(QPointF(projPantallaX, projPantallaY), 14, 14);
+        }
+
         } else if (p->GETTipoMovimiento() == TipoMovimientoProyectil::Parabolico && !spriteGranada.isNull()) {
             int giro = (relojAnim / 4) % 4;
             int wCuadro = spriteGranada.width() / 4;
@@ -2108,12 +2233,39 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         if (jefe->GETFaseLaser() == 1) {
             painter.setPen(QPen(QColor(255, 60, 60, 110), 2));
             painter.drawLine(ojos, jefe->GETFinLaser());
-        } else if (jefe->GETFaseLaser() == 2) {      // disparando
-            painter.setPen(QPen(QColor(255, 30, 30, 200), 14));
-            painter.drawLine(ojos, jefe->GETFinLaser());
-            painter.setPen(QPen(QColor(255, 240, 240), 4));
-            painter.drawLine(ojos, jefe->GETFinLaser());
-        }    // fin del mundo
+        } else if (jefe->GETFaseLaser() == 2) {
+            QPointF fin = jefe->GETFinLaser();
+            float dx = static_cast<float>(fin.x() - ojos.x());
+            float dy = static_cast<float>(fin.y() - ojos.y());
+            float longitud = std::hypot(dx, dy);
+            float anguloDeg = std::atan2(dy, dx) * 180.0f / 3.14159265f;
+
+            if (!spriteRayoLaser.isNull() && longitud > 1.0f) {
+                int altoBillete = 18;
+                int anchoBillete = qMax(24, qRound(altoBillete * (static_cast<float>(spriteRayoLaser.width()) / qMax(1, spriteRayoLaser.height()))));
+                QPixmap billete = spriteRayoLaser.scaled(anchoBillete, altoBillete, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                float margenCara = qMin(18.0f, longitud * 0.25f);
+                float inicioX = static_cast<float>(ojos.x()) + (dx / longitud) * margenCara;
+                float inicioY = static_cast<float>(ojos.y()) + (dy / longitud) * margenCara;
+                float largoUtil = longitud - margenCara;
+                float paso = static_cast<float>(anchoBillete) * 1.05f;
+                float desplazamiento = std::fmod(relojAnim * 4.0f, paso);
+
+                painter.save();
+                painter.translate(inicioX, inicioY);
+                painter.rotate(anguloDeg);
+                for (float d = desplazamiento; d < largoUtil; d += paso) {
+                    if (d + anchoBillete < 0.0f) continue;
+                    painter.drawPixmap(qRound(d), -billete.height() / 2, billete);
+                }
+                painter.restore();
+            } else {
+                painter.setPen(QPen(QColor(255, 30, 30, 200), 14));
+                painter.drawLine(ojos, fin);
+                painter.setPen(QPen(QColor(255, 240, 240), 4));
+                painter.drawLine(ojos, fin);
+            }
+        }
     }
     if (nivelActual == 1 && peleaCamionActiva && camionEsmad != nullptr && camionEsmad->GETEstado() != EstadoEnemigo::destruido) {
         QRectF hbCamion = camionEsmad->GETHitbox();
@@ -2266,7 +2418,33 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         contadorFramesGO = 0;
     }
 
+    if (mostrarTutorialControles && !enSeleccionDificultad && !juegoTerminado && !victoria) {
+        int boxW = 360;
+        int boxH = 155;
+        int boxX = width() - boxW - 25;
+        int boxY = 95;
 
+        painter.save();
+        painter.setBrush(QColor(15, 18, 24, 195));
+        painter.setPen(QPen(QColor(255, 200, 50), 2));
+        painter.drawRoundedRect(boxX, boxY, boxW, boxH, 10, 10);
+
+        painter.setPen(QColor(255, 215, 70));
+        QFont fuenteTituloPop("Courier New", 11, QFont::Bold);
+        painter.setFont(fuenteTituloPop);
+        painter.drawText(boxX + 15, boxY + 24, "CONTROLES (Muévete para ocultar)");
+
+        painter.setPen(Qt::white);
+        QFont fuenteCuerpoPop("Courier New", 10, QFont::Bold);
+        painter.setFont(fuenteCuerpoPop);
+        painter.drawText(boxX + 15, boxY + 50, "Moverse : A / D  o  Flechas");
+        painter.drawText(boxX + 15, boxY + 74, "Saltar  : Espacio");
+        painter.drawText(boxX + 15, boxY + 98, "Apuntar Arriba  : W / Arriba");
+        painter.drawText(boxX + 15, boxY + 122, "Disparar: J / Z");
+        painter.setPen(QColor(180, 195, 210));
+        painter.drawText(boxX + 15, boxY + 144, "Recoge munición y curas");
+        painter.restore();
+    }
 
     if (juegoTerminado) {
         painter.setBrush(Qt::black);
