@@ -796,9 +796,7 @@ void MainWindow::actualizarJuego(){
             }
         }
         if (dificultadJuego == 1 && peleaCamionActiva) {
-            if (camaraX < inicioBossX) {
-                camaraX = inicioBossX;
-            }
+            camaraX = inicioBossX;
             if (jugador->GETX() < inicioBossX + 25.0f) {
                 jugador->setX(inicioBossX + 25.0f);
                 if (jugador->GETVx() < 0.0f) {
@@ -2492,10 +2490,25 @@ void MainWindow::paintEvent(QPaintEvent *event) {
         painter.setPen(QColor(255, 215, 0));
         QString textoV = "¡VICTORIA!";
         painter.drawText((width() - QFontMetrics(fuenteVictoria).horizontalAdvance(textoV)) / 2, 300, textoV);
-        QFont fuenteSub("Courier New", 16, QFont::Bold);
-        painter.setFont(fuenteSub);
+
+        static const char *fraseFinal[3] = {
+            "El cielo se calló. La ciudad también.",
+            "Le devolví la paz a Bogotá...",
+            "aunque la paz nunca dura mucho."
+        };
+        QFont fuenteFrase("Courier New", 16, QFont::Bold);
+        painter.setFont(fuenteFrase);
         painter.setPen(Qt::white);
+        QFontMetrics medidaFrase(fuenteFrase);
+        for (int i = 0; i < 3; ++i) {
+            QString linea = QString::fromUtf8(fraseFinal[i]);
+            painter.drawText((width() - medidaFrase.horizontalAdvance(linea)) / 2, 370 + i * 32, linea);
+        }
+
+        QFont fuenteSub("Courier New", 14, QFont::Bold);
+        painter.setFont(fuenteSub);
+        painter.setPen(QColor(255, 215, 0));
         QString textoSub = "PRESS [R] TO PLAY AGAIN";
-        painter.drawText((width() - QFontMetrics(fuenteSub).horizontalAdvance(textoSub)) / 2, 380, textoSub);
+        painter.drawText((width() - QFontMetrics(fuenteSub).horizontalAdvance(textoSub)) / 2, 500, textoSub);
     }
 }
